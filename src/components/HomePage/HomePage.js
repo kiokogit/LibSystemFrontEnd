@@ -1,9 +1,10 @@
 import { Card, Container, Button } from '@material-ui/core'
 import React, { useEffect} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+
 import { Header } from '../Header/Header';
 import { Footer } from '../Footer/Footer';
-import { Link } from 'react-router-dom';
 import { getBooks } from '../../actions/adminActions/otherActions/actions';
 
 export const HomePage = () => {
@@ -12,11 +13,10 @@ export const HomePage = () => {
         <div>
             <Header />
             <div>
-            <Container style={{ display: 'flex', justifyContent:'space-evenly', marginTop:'200px'}}>
-                <Link to='/loginPage'> <Button>Login</Button></Link>
-                <Link to='/signupPage'><Button>SignUP</Button></Link>
-                <Link to='/browselibrary'><Button>Explore As a Guest</Button></Link>
-            </Container>
+            <Container style={{ display: 'flex', justifyContent:'space-evenly', marginTop:'200px', backgroundColor:'white', height:'1000px'}}>
+                <Button variant='text' component={Link} to='/loginPage'>Login/Register</Button>
+                <Button variant='text' component={Link} to='/browselibrary'>Explore As a Guest</Button>
+                </Container>
             </div>
             <Footer />
         </div>

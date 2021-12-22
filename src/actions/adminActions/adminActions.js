@@ -1,5 +1,42 @@
 import * as api from '../../api/api';
 
+//SignUp Admin
+export const registerAdmin = (admin, navigate) => async (dispatch) => {
+    try {
+        const { data } = await api.signUpAdmin(admin);
+        if (data.status === 'ok') {
+            alert(data.message);
+            //proceed to login
+            navigate('/adminLogin');
+
+        } else {
+            alert(data.message)
+        }
+
+        dispatch({type:'REGISTRATION_STATUS', payload:data})
+
+    } catch (e) {
+        
+    }
+}
+
+//login Admin
+export const adminLogin = (admin, navigate) => async (dispatch) => {
+    try {
+        const { data } = await api.loginAdmin(admin);
+        if (data.status === 'ok') {
+            localStorage.setItem('USER', JSON.stringify({ data: data.message }));
+            //redirect
+            navigate('/adminPage');
+        } else {
+            alert(data.message)
+        }
+        dispatch({ type: 'LOGIN_STATUS', payload: data });
+    } catch (e) {
+        
+    }
+};
+
 //fetch users
 export const getUsers = () => async (dispatch) => {
     try {
@@ -25,6 +62,7 @@ export const getUserDetails = () => async (dispatch) => {
 export const addABook = (book) => async (dispatch) => {
     try {
         const { data } = await api.addBooks(book);
+        alert('Book Added to Library');
         dispatch({ type: 'ADD_NEW_BOOK', payload: data });
 
     } catch (e) {

@@ -21,6 +21,9 @@ export const getOneBook = (id) => API.get(`/books/${id}`);
 
 //ADMINAPI
 //login
+export const loginAdmin = (admin) => API.post('admin/login', admin)
+//signUp
+export const signUpAdmin= (admin) => API.post('admin/signup', admin)
 //get allusers as admin
 export const getAllUsers = () => API.get(`admin/users`);
 //getUser Details  
