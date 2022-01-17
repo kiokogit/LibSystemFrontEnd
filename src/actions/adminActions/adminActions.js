@@ -33,7 +33,7 @@ export const adminLogin = (admin, navigate) => async (dispatch) => {
         }
         dispatch({ type: 'LOGIN_STATUS', payload: data });
     } catch (e) {
-        
+        console.log(e)
     }
 };
 
@@ -49,10 +49,14 @@ export const getUsers = () => async (dispatch) => {
 };
 
 //fetch One User
-export const getUserDetails = () => async (dispatch) => {
+export const getUserDetails = (navigate) => async (dispatch) => {
     try {
         const { data } = await api.getOneUser();
-        dispatch({ type: 'FETCH', payload: data });
+        if (data.status === 'error') {          //if cant get user data, such as in expired token
+            navigate('/loginpage');
+        } else {
+            dispatch({ type: 'FETCH', payload: data });
+        }
     } catch (e) {
         console.log(e);
     }
@@ -117,13 +121,20 @@ export const checkOutManually = (details) => async (dispatch) => {
 
 export const checkInABook = (id) => async (dispatch) => {       //BorrowedBook id
     try {
-        console.log('Sending...')
-        console.log(id)
         const { data } = await api.checkInBook(id);
-        console.log('api data: '+ data)
         dispatch({ type: 'ADD_NEW_BOOK', payload: data })
 
     } catch (e) {
         console.log(e)
     };
 };
+
+//edit book details, including attaching comments by users: Returns fresh books data
+export const editBookDetails = (toEdit) => async(dispatch)=>{
+    try {
+        const { data } = await api.editBook(toEdit);
+        dispatch({type:'GET_ALL_BOOKS', payload:data})
+    } catch (e) {
+        console.log(e)
+    }
+}

@@ -42,7 +42,8 @@ export const checkOutBook = (id) => API.post(`admin/books/lendout/${id}`);
 export const manualCheckOut = (details) => API.post(`admin/books/manual/lendout`, details);
 //receive back a borrowed book from user
 export const checkInBook = (id) => API.post(`admin/books/receiveback/${id}`);
-
+//Edit book details, including cmments by users
+export const editBook = (toEdit) => API.post('admin/books/edit', toEdit)
 
 //USERAPI
 //login
@@ -59,4 +60,6 @@ export const addToCart = (bookId) => API.patch(`users/books/addtocart/${bookId}`
 export const removeFromCart = (bookId) => API.patch(`users/books/removefromcart/${bookId}`);
 //get al books in cart
 
+//edit Profile
+export const editProfile = (user) => API.patch(`users/profile/edit`, user);
 //get suggestions of books - search through db to find similar books

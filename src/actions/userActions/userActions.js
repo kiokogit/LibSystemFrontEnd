@@ -13,6 +13,7 @@ export const loginUser = (credentials, navigate) => async (dispatch) => {
             navigate('/user/dashboard');
         } else {
             alert(login.data.message)
+            
         }
         dispatch({ type: 'LOGIN_STATUS', payload: login.data });
 
@@ -31,6 +32,19 @@ export const logOut = () => async (dispatch) => {
         console.log(e);
     }
 };
+
+//Edit User Profile
+export const editProfile = (user) => async (dispatch) => {
+    try {
+
+        const { data } = await api.editProfile(user);
+        dispatch({ type: 'FETCH', payload:data});
+
+    } catch (e) {
+        alert('Details Not Saved. Server Error')
+        console.log(e)
+    }
+}
 
 //add a book to cart
 export const addBookToCart = (bookId) => async (dispatch) => {
@@ -65,7 +79,7 @@ export const sendBorrowRequest = (toBorrow) => async (dispatch) => {
 };
 
 //cancel borrow request
-export const cancelBookRequest = (toCancel) => async(dispatch) => {
+export const cancelBookRequest = (toCancel) => async (dispatch) => {
 
     try {
         const { data } = await api.cancelBorrowRequest(toCancel);
@@ -73,4 +87,4 @@ export const cancelBookRequest = (toCancel) => async(dispatch) => {
     } catch (e) {
         console.log(e)
     }
-}
+};

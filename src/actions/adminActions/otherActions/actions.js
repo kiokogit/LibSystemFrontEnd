@@ -1,4 +1,5 @@
 import * as api from '../../../api/api';
+import {loginUser} from '../../userActions/userActions';
 
 //basically books actions - accessible by all - user, admin; public api actions
 
@@ -26,12 +27,14 @@ export const getBookDetails = (id) => async (dispatch) => {
 };
 
 //add User
-export const signUpUser = (user) => async (dispatch) => {
+export const signUpUser = (user, navigate) => async (dispatch) => {
     
     try {
         const { data } = await api.signUp(user);
         alert(data.message)
-        dispatch({ type: 'REGISTRATION_STATUS', payload: data });
+        const credentials={email:user.userEmail, password:user.userPassword};
+        await dispatch({ type: 'REGISTRATION_STATUS', payload: data });
+        await dispatch(loginUser(credentials, navigate));
 
     } catch (e) {
        console.log(e)

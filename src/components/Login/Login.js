@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate} from 'react-router-dom';
 
-import { Paper, Typography, Input, Button, TextField } from '@material-ui/core';
+import { Paper, Typography, Button, TextField } from '@material-ui/core';
 import { Visibility, VisibilityOff } from '@material-ui/icons';
 import { Header } from '../Header/Header';
 import { Loading } from '../Loading';
@@ -13,9 +13,8 @@ import { signUpUser } from '../../actions/adminActions/otherActions/actions';
 import { isEmail, isStrongPassword } from 'validator';
 
 export const Login = () => {
-    
     const [form, setForm] = useState('login');
-  
+
     return (
         <div align='center'>
             <Header />
@@ -50,9 +49,14 @@ const LoginForm = ({setForm}) => {
         const credentials = { email: email, password: password }
         //do not submit if there are warnings
         try {
-            setLoading(true)
-            await dispatch(loginUser(credentials, navigate));  //AWAIT to force succeeding actions to wait for the current task
-            setLoading(false)     
+            if (emailWarning) {
+                alert('Cannot Submit A Form with Errors')
+                return
+            } else {
+                setLoading(true)
+                await dispatch(loginUser(credentials, navigate));  //AWAIT to force succeeding actions to wait for the current task
+                setLoading(false)
+            }   
         } catch (e) {
             console.log(e)
             return
@@ -60,13 +64,13 @@ const LoginForm = ({setForm}) => {
     };
     return (
         <form type="submit" autoComplete="off" onSubmit={handleSubmit}>
-                    <Paper align='center' style={{ maxWidth: 400 }}>
+            <Paper align='center' style={{ maxWidth: 400 }}>
                         <Typography style={{ paddingTop: 10 }}>
-                            Login
+                            User Portal Login
                 </Typography>
                 {loading? <Loading/>:null}
-                        <div style={{ alignText: 'center', width:'70%' }}>
-                            <Input required style={{ paddingTop: 10 }} placeholder='Enter email address' fullWidth onChange={(e) => {
+                        <div style={{ alignText: 'center', width:'80%' }}>
+                            <TextField required variant='outlined' size='small' style={{marginTop:'10px'}} label='Enter email address' fullWidth onChange={(e) => {
                                 if (isEmail(e.target.value)) {
                                     setemailWarning(null)
                                     setemail(e.target.value)
@@ -76,11 +80,11 @@ const LoginForm = ({setForm}) => {
                             }} />
                                 <Typography color='error' style={{ fontSize: '0.6rem' }}>{emailWarning ? emailWarning : null}</Typography>
                             <div style={{ alignText: 'center',display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
-                                <Input required style={{ paddingTop: 10 }} placeholder='Enter password' type={show ? 'text' : 'password'} onChange={(e) => setpassword(e.target.value)} />
+                                <TextField required variant='outlined' size='small' style={{marginTop:'10px'}} label='Enter password' type={show ? 'text' : 'password'} onChange={(e) => setpassword(e.target.value)} />
                                 <Button onClick={(e) => setshow(!show)}>{show ? <VisibilityOff /> : <Visibility/>}</Button>
                             </div>
                         </div>
-                        <Button variant="contained" color="primary" style={{ padding: 4, margin: '5px', minWidth: 200 }} type='submit'>{loading? 'Logging User...':'Login'}
+                        <Button variant="contained" color="primary" style={{ padding: 4, margin: '5px', minWidth: 200 }} type='submit'>{loading? 'Please Wait...':'Login'}
                         </Button>
                         <div>
                             forgot password?
@@ -126,9 +130,8 @@ const SignUpForm = ({setForm}) => {
     const [passWarning, setPassWarning] = useState(null);
     const [pass1Warning, setPass1Warning] = useState(null);
     
-    //show success or failure message
-    // const [regStatus, setRegStatus] = useState(false)
-
+    const navigate = useNavigate();
+    
     //submit data
     const onSubmit = async (e) => {
         e.preventDefault();
@@ -139,7 +142,7 @@ const SignUpForm = ({setForm}) => {
                 return
             } else {
                 setLoading(true);
-                await dispatch(signUpUser(user));
+                await dispatch(signUpUser(user, navigate));
                 setLoading(false);
                 //clear form if user registered
             }
@@ -166,9 +169,9 @@ const SignUpForm = ({setForm}) => {
             <Header />
             <Paper align='center' style={{ maxWidth: 300, padding: 20 }}>
                 <Typography variant="h5" style={{ fontFamily: 'courier', fontStyle: 'bold', fontSize: '1.5rem' }}>
-                    Sign Up
+                    Register as a User
                 </Typography>
-                
+                {loading? <Loading/>:null}
                 <form type="submit" autoComplete="off" onSubmit={onSubmit}>
                     <TextField size='small' required label="First Name" name="firstName" variant="outlined" value={user.firstName} style={{ margin: '10px 0' }} fullWidth onChange={(e) => setuser({ ...user, firstName: e.target.value })} />
                     <TextField size='small' label="Last Name" name="lastName" variant="outlined" value={user.lastName} style={{ margin: '10px 0' }} fullWidth onChange={(e) => setuser({ ...user, lastName: e.target.value })} />
@@ -205,10 +208,10 @@ const SignUpForm = ({setForm}) => {
                             }}
                             style={{ margin: '10px 0' }} />
                     <Typography color='error' style={{fontSize:'0.6rem'}}>{passWarning}</Typography>
-                    <Button type='submit' style={{ backgroundColor: 'black', color: 'white', marginTop: '3px' }} fullWidth>{!loading ? 'Register' : 'Loading...'}</Button>
+                    <Button type='submit' style={{ backgroundColor: 'black', color: 'white', marginTop: '3px' }} fullWidth>{!loading ? 'Register' : 'Please Wait...'}</Button>
                     <Button variant='contained' color='secondary' style={{ marginTop: '2px', color: 'white' }} fullWidth onClick={(e) => clear(e)}>Clear</Button>
                 </form>
-                <div>ALREADY HAVE AN ACCOUNT? <Button onClick={(e) => {
+                <div>Have an Account Already? <Button onClick={(e) => {
                         e.preventDefault();
                         setForm('login')
                             }}>LOGIN</Button></div>

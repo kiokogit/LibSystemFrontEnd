@@ -34,11 +34,11 @@ const SignInForm = ({setFormType}) => {
     return (
         <form onSubmit={(e) => handleSubmit(e)} style={{ marginTop: '150px', width: '300px' }}>
             <Paper style={{ paddingBottom: '23px' }}>
-                Login
+                Admin Portal
                 <div style={{ width: '90%' }}>
                     <TextField required fullWidth variant='outlined' size='small' value={admin.email} label='Enter Admin Email' onChange={(e) => setAdmin({ ...admin, email: e.target.value })} style={{ margin: '10px 0' }} />
                     <TextField required fullWidth variant='outlined' size='small' value={admin.keyCode} label='Enter Code' onChange={(e) => setAdmin({ ...admin, keyCode: e.target.value })} style={{ margin: '10px 0' }} />
-                    <Button type='submit'>
+                    <Button variant="outlined" type='submit'>
                         LOGIN
                     </Button>
                     <div><button onClick={(e) => {
@@ -66,13 +66,13 @@ const SignUpForm = ({setFormType}) => {
     return (
         <form onSubmit={(e) => handleSubmit(e)} style={{ marginTop: '150px', width:'300px' }}>
         <Paper style={{ paddingBottom: '23px' }}>
-            SignUP
+            Admin Sign Up
             <div style={{ width:'90%' }}>
                 <TextField required variant='outlined' fullWidth size='small' value={admin.name} label='Enter Name' onChange={(e) => setAdmin({ ...admin, name: e.target.value })} style={{ margin: '10px 0' }} />
                 <TextField required variant='outlined' fullWidth size='small' value={admin.phone} label='Enter Phone Number' onChange={(e) => setAdmin({ ...admin, phone: e.target.value })} style={{ margin: '10px 0' }}/>
                 <TextField required variant='outlined' fullWidth size='small' value={admin.email} label='Enter Admin Email' onChange={(e) => setAdmin({ ...admin, email: e.target.value })} style={{ margin: '10px 0' }}/>
                 <TextField required variant='outlined' fullWidth size='small' value={admin.keyCode} label='Enter Code' onChange={(e) => setAdmin({ ...admin, keyCode: e.target.value })} style={{ margin: '10px 0' }}/>
-            <Button type='submit'>
+            <Button variant="outlined" type='submit'>
                 REGISTER
             </Button>
             <div> <button onClick={(e) => {

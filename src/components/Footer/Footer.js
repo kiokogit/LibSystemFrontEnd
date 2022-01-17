@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, Container } from '@material-ui/core'
 
 export function Footer() {
+    //Dummy Links
     return (
         <Container style={{ backgroundColor: 'black', color: 'white', height: '150px', display:'flex', flexDirection:'row', justifyContent:'space-between', padding:'20px'}}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -22,16 +23,16 @@ export function Footer() {
                 <Link>CBC</Link>
             </div>
             <div style={{display:'flex', flexDirection:'column'}}>
-                External Links
-                <Link>IMF Library</Link>
-                <Link>JKUAT Library</Link>
+                Partners
+                <Link>Safaricos</Link>
+                <Link>Eissen-Jink</Link>
                 <Link>KNBS</Link>
                 <Link>Ministry of Education</Link>
-                <Link>CBC</Link>
+                <Link>KICD</Link>
             </div>
             <div>
-                <p>This library prides itself of a phenominal legacy since its inception in 2003</p>
-                <p>Copyright: &copy 2021</p>
+                <p>Created in 2021</p>
+                <p>Copyright: {new Date().getFullYear()}</p>
             </div>
         </Container>
     );

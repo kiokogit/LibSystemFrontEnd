@@ -1,30 +1,11 @@
 import { Button, Paper, TextField, Typography, Container } from '@material-ui/core';
 import FileBase from 'react-file-base64';
-import React, { useState} from 'react';
+import React from 'react';
 import { useDispatch} from 'react-redux';
 
 import { addABook } from '../../actions/adminActions/adminActions';
 
-export const EditForm = () => {
-
-    const [bookDetails, setbookDetails] = useState({
-        title: "",
-        author: "",
-        yearOfPublication: "",
-        coverImage: "",
-        edition: "",
-        volume: "",
-        editors: [],
-        preview: "",
-        cityPublished: "",
-        publisher: "",
-        noOfPages: "",
-        category: "",
-        discipline: "",
-        subject: "",
-        reviews: "",
-        tags: [],
-    });
+export const EditForm = ({bookDetails, setbookDetails}) => {
 
     const dispatch = useDispatch();
 
@@ -36,24 +17,7 @@ export const EditForm = () => {
 
     //clear form after submit - reset state
     const clearForm = () => {
-        setbookDetails({
-            title: "",
-            author: "",
-            yearOfPublication: "",
-            coverImage: "",
-            edition: "",
-            volume: "",
-            editors: [],
-            preview: "",
-            cityPublished: "",
-            publisher: "",
-            noOfPages: "",
-            category: "",
-            discipline: "",
-            subject: "",
-            reviews: "",
-            tags: []
-        })
+        setbookDetails({})
     };
 
     //create tags seperated by commas, for mapping with hashtags

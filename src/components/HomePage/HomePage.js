@@ -13,9 +13,11 @@ export const HomePage = () => {
         <div>
             <Header />
             <div>
-            <Container style={{ display: 'flex', justifyContent:'space-evenly', marginTop:'200px', backgroundColor:'white', height:'1000px'}}>
-                <Button variant='text' component={Link} to='/loginPage'>Login/Register</Button>
-                <Button variant='text' component={Link} to='/browselibrary'>Explore As a Guest</Button>
+            <Container style={{ display: 'flex', flexDirection:'row', justifyContent:'space-evenly', margin:'60px 0px 0px 0px', height:'350px'}}>
+                <Button variant='outlined' style={{marginTop:'275px', height:'50px'}} component={Link} to='/loginPage'>Login/Register</Button>
+                <Button variant='outlined' style={{marginTop:'275px', height:'50px'}} component={Link} to='/browselibrary'>Explore As a Guest</Button>
+                </Container>
+                <Container style={{ height:'500px'}}>
                 </Container>
             </div>
             <Footer />

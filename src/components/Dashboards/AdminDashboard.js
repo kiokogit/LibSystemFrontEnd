@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom'
 
 import { AppBar, Paper, Button, Card, Badge, Table, TableBody, TableCell, TableRow, TableHead, TextField, Typography, Container } from '@material-ui/core';
 
-import { checkInABook, checkOutABook, pendingRequests, unReturnedBooks, checkOutManually } from '../../actions/adminActions/adminActions';
+import { checkInABook, checkOutABook, pendingRequests, unReturnedBooks, checkOutManually, getUsers } from '../../actions/adminActions/adminActions';
 import { getBooks} from '../../actions/adminActions/otherActions/actions';
 import { EditForm } from '../EditBook/EditForm';
 
 export const AdminDashboard = () => {
 
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const admin = JSON.parse(localStorage.getItem('USER')).data;
@@ -19,8 +20,43 @@ export const AdminDashboard = () => {
     const handleLogOut = (e) => {
         e.preventDefault();
         localStorage.removeItem('USER');
-        navigate('/adminLogin');
+        navigate('/');
     };
+
+    //OTHER WINDOWS OBJECTS
+    //Returning Books
+    useEffect(() => {
+        dispatch(unReturnedBooks());
+    }, [dispatch]);
+
+    const borrowedBooks= useSelector(state => state.list2);
+
+    //Borrowing
+    useEffect(() => {
+        dispatch(pendingRequests());
+    }, [dispatch]);
+
+    const borrowRequests = useSelector(state => state.list);
+
+    //Editing
+    useEffect(() => {
+        dispatch(getBooks());
+    }, [dispatch])
+
+    const books = useSelector((state) => state.books);
+
+    //HANDLERS
+     //auto borrowing
+     const handleCheckOut = (e, rqstId) => {
+        e.preventDefault();
+        dispatch(checkOutABook(rqstId));
+    };
+
+    //GET ALL USERS
+    useEffect(() => {
+        dispatch(getUsers());
+    })
+    const users = useSelector((state) => state.users);
 
     return (
         <div id='adminDash'>
@@ -67,10 +103,11 @@ export const AdminDashboard = () => {
                 </Container>
                 <div style={{ width: '80%' }}>
                     {window === 'home' && <Home setWindow={setWindow} />}
-                    {window === 'addBook' && <AddNewBook />}
-                    {window === 'lendOut' && <LendBooks />}
-                    {window === 'returnBooks' && <ReturnABook />}
+                    {window === 'addBook' && <AddNewBook books={books}/>}
+                    {window === 'lendOut' && <LendBooks handleCheckOut={handleCheckOut} borrowRequests={borrowRequests} borrowedBooks={borrowedBooks}/>}
+                    {window === 'returnBooks' && <ReturnABook borrowedBooks={borrowedBooks} />}
                     {window === 'explore' && <ExploreBooks />}
+                    {window === 'users' && <ShowUsers users={users} />}
                 </div>
             </div>
         </div>
@@ -83,7 +120,7 @@ const Home = ({ setWindow }) => {
 
     useEffect(() => {
         dispatch(pendingRequests());
-    }, [dispatch]);
+    });
 
     const list = useSelector(state => state.list);
 
@@ -128,29 +165,28 @@ const Home = ({ setWindow }) => {
 }
 
 //lend out books
-const LendBooks = () => {
+const LendBooks = ({borrowRequests, borrowedBooks, handleCheckOut}) => {
     const dispatch = useDispatch();
-    useEffect(() => {
-        dispatch(pendingRequests());
-    }, [dispatch]);
-
+    
     const [details, setDetails] = useState({
         bookId: '',
         userEmail:''
     })
-    const list = useSelector(state => state.list);
 
-    //auto borrowing
-    const handleCheckOut = (e, rqstId) => {
-        e.preventDefault();
-        dispatch(checkOutABook(rqstId));
-        dispatch(pendingRequests());
-    };
 //for physical lib borrowing
     const manuallyCheckOut = (e, toBorrow) => {
         e.preventDefault();
         dispatch(checkOutManually(toBorrow));
-        dispatch(pendingRequests());
+    };
+
+    //check if a book is already borrowed, to prevent duplicate key errors
+
+    console.log(borrowedBooks);
+    console.log(borrowRequests)
+    const availability = (reqst) => {
+        const available = borrowedBooks.filter(book => book.bookId._id === reqst.bookId._id);
+        if (available.length > 0) return 1;
+        else return 0
     };
 
     return (
@@ -159,7 +195,7 @@ const LendBooks = () => {
             <Container style={{display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
                 <Container>
                     <Card>      {/*if else statement for lists*/}
-                        {!list? 'Cannot Fetch List':((list.length===0)? ('No Pending Requests to Show. Try Manual Check Out') :
+                        {!borrowRequests? 'Cannot Fetch List':((borrowRequests.length===0)? ('No Pending Requests to Show. Try Manual Check Out') :
                     (<Table>
                         <TableHead style={{backgroundColor:'lightcyan'}}>
                             <TableCell>Book</TableCell>
@@ -168,15 +204,16 @@ const LendBooks = () => {
                             <TableCell>Chek out</TableCell>
                         </TableHead>
                         <TableBody>
-                            {list.map((reqst) =>
+                            {borrowRequests.map((reqst) =>
                                 <TableRow key={reqst._id}>
                                     <TableCell> <img src={reqst.bookId? reqst.bookId.coverImage:null } alt='coverImg' style={{ width: '40px', height: '50px', margin:'3px'}} /> </TableCell>
                                     <TableCell> {!reqst.bookId? 'No Book Data':reqst.bookId.title} </TableCell>
                                     <TableCell> {!reqst.bookId? 'No Book Data':reqst.userId.userEmail} </TableCell>
                                     <TableCell>
-                                        <Button aria-label='Click to check book out' onClick={(e)=> handleCheckOut(e, reqst._id)}>
-                                            Check Out
-                                        </Button>
+                                        { availability(reqst)===1 ? 'Book Not Available' :
+                                            <Button aria-label='Click to check book out' onClick={(e) => handleCheckOut(e, reqst._id)}>
+                                                Check Out
+                                            </Button>}
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -200,31 +237,24 @@ const LendBooks = () => {
 };
 
 //return a borrowed book to library
-const ReturnABook = () => {
+const ReturnABook = ({borrowedBooks}) => {
+
     const dispatch = useDispatch();
 
-    useEffect(() => {
-        dispatch(unReturnedBooks());
-    }, [dispatch]);
-
-    const list2= useSelector(state => state.list2);
-
-    //receive a book, handle checkIn
-    const handleCheckIn = (e, borrowId) => {
+     //receive a book, handle checkIn
+     const handleCheckIn = (e, borrowId) => {
         e.preventDefault();
         if (window.confirm('All Fines Cleared? ')) {
             dispatch(checkInABook(borrowId));
-            dispatch(unReturnedBooks());
         } else {
             alert('Client must clear pending fines first...')
             return
         }
     };
-
     //fines
     const fines = (date2, date1) => {
         const FINES_AMOUNT_PER_DAY = 10;
-        const fine = (date2.getDate() - date1.getDate()) * FINES_AMOUNT_PER_DAY;
+        const fine = Math.floor((date2.getTime() - date1.getTime())/(3600*24*1000))* FINES_AMOUNT_PER_DAY;
         return fine;
     };
    
@@ -234,7 +264,7 @@ const ReturnABook = () => {
             <Container style={{display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
                 <Container>
                     <Card>      {/*if else statement for lists*/}
-                        {!list2? 'List Not found':((list2.length===0)? ('No Pending Borrowed Books to Show. Try Manual Check In') :
+                        {!borrowedBooks? 'List Not found':((borrowedBooks.length===0)? ('No Pending Borrowed Books to Show. Try Manual Check In') :
                     (<Table>
                         <TableHead style={{backgroundColor:'lightcyan'}}>
                             <TableCell></TableCell>
@@ -246,14 +276,14 @@ const ReturnABook = () => {
                             <TableCell>Chek in</TableCell>
                         </TableHead>
                         <TableBody>
-                            {list2.map((brrw) =>
+                            {borrowedBooks.map((brrw) =>
                                 <TableRow key={brrw._id}>
                                     <TableCell> <img src={brrw.bookId.coverImage} alt='coverImg' style={{ width: '40px', height: '50px', margin:'3px'}} /> </TableCell>
                                     <TableCell> {brrw.bookId.title} </TableCell>
                                     <TableCell> {brrw.userId.userEmail}</TableCell>
                                     <TableCell> {new Date(brrw.dateBorrowed).toLocaleDateString()} </TableCell>
                                     <TableCell> {new Date(brrw.dateToReturn).toLocaleDateString()} </TableCell>
-                                    <TableCell> {fines(new Date(), new Date(brrw.dateBorrowed))<1? 0:fines(new Date(), new Date(brrw.dateBorrowed))} </TableCell>
+                                    <TableCell> {fines(new Date(), new Date(brrw.dateToReturn))<1? 0: `KES ${fines(new Date(), new Date(brrw.dateToReturn))}`} </TableCell>
                                     <TableCell>
                                         <Button aria-label='Click to check book in' onClick={(e) => {
                                             handleCheckIn(e, brrw._id)
@@ -283,7 +313,8 @@ const ReturnABook = () => {
 //add newBook
 const AddNewBook = () => {
     //set state for windows
-    const [method, setMethod] = useState(null)
+    const [method, setMethod] = useState('manual')
+    const [bookDetails, setbookDetails] = useState({});
     return (
         <div>
             <h3>ADD A NEW BOOK TO THE LIBRARY</h3>
@@ -295,7 +326,7 @@ const AddNewBook = () => {
                 e.preventDefault();
                 setMethod('auto');
             }}>Scan RFID</button>
-            {method === 'manual' && <EditForm />}
+            {method === 'manual' && <EditForm bookDetails={bookDetails}  setbookDetails={setbookDetails}  />}
             {method==='auto' && (<Container>
                     <Paper align='center' style={{ width:'400px', margin:'50px', display:'flex', flexDirection:'column'}}>
                         <Typography>Scan RFID Tag</Typography>
@@ -324,8 +355,8 @@ const ExploreBooks = () => {
             <div style={{ width: '100%', display: 'flex', flexDirection: 'row' }}>
                 <div style={{ width: '50%', backgroundColor: 'initial' }}>
                     <Container align='left' style={{ overflowY: 'scroll', maxHeight: '100%' }}>
-                        <h2>Explore {books.length} books in the Library</h2>
-                        {books.map((book) =>
+                        <h2>Explore {books?.length} books in the Library</h2>
+                        {books?.map((book) =>
                             <Container onClick={(e) => {
                                 setBook(book)
                             }} key={book._id} style={{ display: 'flex', flexDirection: 'row', fontSize: '0.75rem', borderBottom: 'solid 1px', padding: '5px', textAlign: 'left', width: '100%', cursor: 'pointer' }}>
@@ -334,7 +365,9 @@ const ExploreBooks = () => {
                                 </div>
                                 <div>
                                     <p>{book.title}</p>
-                                    <p>  Author: {book.author}.{book.noOfPages}pgs</p> </div>
+                                    <p>  Author: {book.author}.{book.noOfPages}pgs</p>
+                                </div>
+                                
                             </Container>)}
                     </Container>
                 </div>
@@ -353,8 +386,14 @@ const ExploreBooks = () => {
                                     <p>Edition: {book.edition}</p>
                                     <p>Size: {book.noOfPages} pages</p>
                                 </div>
-                                    <p>Preview: {book.preview}</p>
-                                    <p>Tags: {book.tags.map((tag) => ` #${tag}`)}</p>
+                                <p>Preview: {book.preview}</p>
+                                <p>Tags: {book.tags.map((tag) => ` #${tag}`)}</p>
+                                <div>
+                                    <button onClick={(e) => {
+                                        e.preventDefault();
+                                    }}>Edit</button>
+                                    <button>Delete</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -363,3 +402,18 @@ const ExploreBooks = () => {
         </div>
     );
 };
+
+const ShowUsers = ({users}) => {
+    return (
+        <div>
+            <h3>LIBRARY USERS TABLE</h3>
+            {users?.map(user =>
+                <div key={user.index}>
+                    <div>{user.userEmail}, {user.firstName} {user.lastName}</div>
+                    <hr/>
+                </div>
+            )}
+        </div>
+        
+    )
+}

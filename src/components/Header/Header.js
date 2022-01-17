@@ -10,46 +10,50 @@ export const Header = () => {
 
     return (
         <div>
-        <AppBar style={{ padding: 10, width: '100%', backgroundColor: 'inherit', color:'black' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
-                <IconButton onClick={(e)=>setToggleMenu(!toggleMenu)}>
-                    <Menu />
-                </IconButton>
-                <Button variant='text' component={Link}  to='/'>
-                    Home
-                </Button>
-                <Button variant='text' component={Link}  to='/loginPage' >
-                    Login/Register
-                </Button>
-                <Button variant='text' component={Link}  to='/adminLogin'>
-                    admin
-                </Button>
-            </div>
+            <AppBar style={ { padding: 10, width: '100%', color: 'black', backgroundColor:'inherit' } }>
+                <div style={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }>
+                    <div>
+                    <IconButton onClick={ (e) => setToggleMenu(!toggleMenu) }>
+                        <Menu />
+                    </IconButton>
+                    <Button variant='text' component={ Link } to='/'>
+                        Home
+                        </Button>
+                        </div>
+                    <div>
+                        <Button variant='outlined' component={ Link } to='/loginPage' >
+                            User Portal
+                        </Button>
+                        <Button variant='text' style={{margin:'5px', fontSize:'0.7rem'}} component={ Link } to='/adminLogin'>
+                            Admin Portal
+                        </Button>
+                    </div>
+                </div>
+            { !toggleMenu ? null : (<Card style={ { position: 'relative', marginTop: '0px', float: 'left', width:'max-content' } }>
+                <ul>
+                    <li>
+                        Home
+                    </li>
+                    <li>
+                        About
+                    </li>
+                    <hr />
+                    <li>
+                        Services
+                    </li>
+                    <li>
+                        Home
+                    </li>
+                    <li>
+                        About
+                    </li>
+                    <hr />
+                    <li>
+                        Services
+                    </li>
+                </ul>
+            </Card>) }
             </AppBar>
-            {!toggleMenu ? null:( <Card style={{display:'inherit',position:'static', marginTop:'0px', float:'left'}}>
-            <ul>
-                <li>
-                    Home
-                </li>
-                <li>
-                    About
-                    </li>
-                    <hr/>
-                <li>
-                    Services
-                </li>
-                <li>
-                    Home
-                </li>
-                <li>
-                    About
-                    </li>
-                    <hr/>
-                <li>
-                    Services
-                </li>
-            </ul>
-        </Card>)}
-            </div>
+        </div>
     );
 };
