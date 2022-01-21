@@ -5,7 +5,7 @@ dotenv.config();
 
 const BASE_URL = process.env.NODE_ENV === 'production' ? process.env.BASE_URL:process.env.LOCAL_URL
 
-const API = axios.create({ baseURL: BASE_URL });    //eg http://localhost:5000
+const API = axios.create({ baseURL: BASE_URL }, {headers:{'Content-Type':'text/plain;charset=utf-8'}});    //eg http://localhost:5000
 
 API.interceptors.request.use((req) => {
     const user = localStorage.getItem('USER')
