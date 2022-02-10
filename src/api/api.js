@@ -55,7 +55,7 @@ export const deleteUser = (id) => API.patch(`admin/users/delete/${id}`);
 //USERAPI
 //login
 export const userLogin = (credentials) => API.post(`users/login`, credentials);
-export const logOut = () => API.get('users/logout/');
+export const logOut = () => API.get('users/logout');
 //Edit Profile
 //send borrowing request
 export const borrowABook = (toBorrow) => API.post(`users/books/borrow`, toBorrow);
