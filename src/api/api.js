@@ -14,7 +14,7 @@ API.interceptors.request.use((req) => {
 });
 
 //for all users
-export const signUp = (user) => API.post(`/signup/`, user);
+export const signUp = (user) => API.post(`/signup`, user);
 
 //BOOKSAPI
 //get all books
@@ -24,7 +24,7 @@ export const getOneBook = (id) => API.get(`/books/${id}`);
 
 //ADMINAPI
 //login
-export const loginAdmin = (admin) => API.post('admin/login/', admin)
+export const loginAdmin = (admin) => API.post('admin/login', admin)
 //get allusers as admin
 export const getAllUsers = () => API.get(`admin/users`);
 //getUser Details  
@@ -54,11 +54,11 @@ export const deleteUser = (id) => API.patch(`admin/users/delete/${id}`);
 
 //USERAPI
 //login
-export const userLogin = (credentials) => API.post(`users/login/`, credentials);
+export const userLogin = (credentials) => API.post(`users/login`, credentials);
 export const logOut = () => API.get('users/logout/');
 //Edit Profile
 //send borrowing request
-export const borrowABook = (toBorrow) => API.post(`users/books/borrow/`, toBorrow);
+export const borrowABook = (toBorrow) => API.post(`users/books/borrow`, toBorrow);
 //cancel borrow request
 export const cancelBorrowRequest = (id) => API.delete(`users/books/cancelorder/${id}`);
 //should a user prompt book return?
