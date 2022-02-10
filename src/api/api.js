@@ -3,7 +3,7 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const API = axios.create({ baseURL: process.env.REACT_APP_BASE_URL||'http://localhost:8000/api' }, {headers:{'Content-Type':'text/plain;charset=utf-8'}});    //eg http://localhost:5000
+const API = axios.create({ baseURL: process.env.REACT_APP_BASE_URL }, {headers:{'Content-Type':'text/plain;charset=utf-8'}});    //eg http://localhost:5000
 
 API.interceptors.request.use((req) => {
     const user = localStorage.getItem('USER')
