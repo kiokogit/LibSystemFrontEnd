@@ -17,7 +17,23 @@ export const EditForm = ({bookDetails, setbookDetails}) => {
 
     //clear form after submit - reset state
     const clearForm = () => {
-        setbookDetails({})
+        setbookDetails({
+            title: '',
+            author: '',
+            coverImage:'',
+            yearOfPublication: '',
+            edition: '',
+            editors: '',
+            tags: '',
+            noOfPages: '',
+            volume: '',
+            discipline: '',
+            subject: '',
+            category: '',
+            preview: '',
+            publisher: '',
+            cityPublished:''
+        })
     };
 
     //create tags seperated by commas, for mapping with hashtags
@@ -42,7 +58,7 @@ export const EditForm = ({bookDetails, setbookDetails}) => {
                             setbookDetails({ ...bookDetails, editors: editors })
                         }} />
                         <TextField label='Edition' fullWidth size='small' name='edition' variant='outlined' style={{ margin: 10 }} value={bookDetails.edition} onChange={(e) => setbookDetails({ ...bookDetails, edition: e.target.value })} />
-                        <TextField label='Year Published' fullWidth size='small' name='yearOfPublication' variant='outlined' style={{ margin: 10 }} value={bookDetails.yearOfPublication} onChange={(e) => setbookDetails({ ...bookDetails, yearOfPublication: e.target.value })} />
+                        <TextField type='date' label='Year Published' fullWidth size='small' name='yearOfPublication' variant='outlined' style={{ margin: 10 }} value={bookDetails.yearOfPublication} onChange={(e) => setbookDetails({ ...bookDetails, yearOfPublication: e.target.value })} />
                         <TextField label='Publisher' fullWidth size='small' name='publisher' variant='outlined' style={{ margin: 10 }} value={bookDetails.publisher} onChange={(e) => setbookDetails({ ...bookDetails, publisher: e.target.value })} />
                         <TextField label='City' fullWidth size='small' name='cityPublished' variant='outlined' style={{ margin: 10 }} value={bookDetails.cityPublished} onChange={(e) => setbookDetails({ ...bookDetails, cityPublished: e.target.value })} />
                     </Container>
@@ -53,7 +69,7 @@ export const EditForm = ({bookDetails, setbookDetails}) => {
                         <TextField label='Discipline, eg Languages' fullWidth size='small' name='discipline' variant='outlined' style={{ margin: 10 }} value={bookDetails.discipline} onChange={(e) => setbookDetails({ ...bookDetails, discipline: e.target.value })} />
                         <TextField label='Category, eg school book, fiction' fullWidth size='small' name='category' variant='outlined' style={{ margin: 10 }} value={bookDetails.category} onChange={(e) => setbookDetails({ ...bookDetails, category: e.target.value })} />
                         <TextField label='Subject, eg English, Sociology' fullWidth size='small' name='subject' variant='outlined' style={{ margin: 10 }} value={bookDetails.subject} onChange={(e) => setbookDetails({ ...bookDetails, subject: e.target.value })} />
-                        <TextField label='Preview' fullWidth size='small' name='preview' variant='outlined' style={{ margin: 10 }} value={bookDetails.preview} onChange={(e) => setbookDetails({ ...bookDetails, preview: e.target.value })} />
+                        <TextField label='Preview' fullWidth size='small' name='preview' variant='outlined' multiline={true} style={{ margin: 10 }} value={bookDetails.preview} onChange={(e) => setbookDetails({ ...bookDetails, preview: e.target.value })} />
                         <TextField label='Tags (separate with comma)' fullWidth size='small' name='tags' variant='outlined' style={{ margin: 10 }} value={bookDetails.tags} onChange={(e) => {
                             const realTags = createList(e.target.value.trim());
                             setbookDetails({ ...bookDetails, tags: realTags })

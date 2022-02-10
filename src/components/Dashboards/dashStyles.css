@@ -1,5 +1,6 @@
-body {
-    background-image: url('../Dashboards/background.jpg');
-    background-size: 100%;
-    background-attachment: fixed;
+
+.adminbutton {
+    border:solid black 2px;
+    background-color:transparent;
+    color:inherit;
 }

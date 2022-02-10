@@ -4,17 +4,18 @@ import { useNavigate } from "react-router-dom";
 import FileBase from "react-file-base64";
 import moment from 'moment';
 
-import {IconButton,Grid,TextField,Button, Input} from "@material-ui/core";
-import {AccountCircle,ShoppingCart,AddShoppingCart,Menu as MenuIcon, Edit, Home, Lock,Visibility} from "@material-ui/icons";
-import { Container, Badge, AppBar, Avatar} from "@mui/material";
+import { IconButton, Grid, TextField, Button, Input } from "@material-ui/core";
+import { AccountCircle, ShoppingCart, AddShoppingCart, Menu as MenuIcon, Edit, Home, Lock} from "@material-ui/icons";
+import { Container, Badge, AppBar, Avatar } from "@mui/material";
 
 import { getUserDetails } from "../../actions/adminActions/adminActions";
-import {addBookToCart,cancelBookRequest,editProfile,logOut,removeFromCart,sendBorrowRequest} from "../../actions/userActions/userActions";
+import { getComments, submitComment, addBookToCart, cancelBookRequest, editProfile, logOut, removeFromCart, sendBorrowRequest, getUserBorrowedBks, getUserBookRequests, getUserBooksInCart } from "../../actions/userActions/userActions";
 import { getBooks } from "../../actions/adminActions/otherActions/actions";
 
 import { editBookDetails } from "../../actions/adminActions/adminActions";
+
 //Styles css
-import './dashStyles/userstyles.css'
+import './dashStyles/userstyles.css';
 //userdashboard
 export const UserDashboard = () => {
 
@@ -23,87 +24,117 @@ export const UserDashboard = () => {
 
   //fetch user details
   useEffect(() => {
-    dispatch(getUserDetails(navigate));
-  }, [dispatch, navigate]);
+    dispatch(getUserDetails());
+  }, [dispatch]);
 
   //fetch library
   useEffect(() => {
     dispatch(getBooks());
   }, [dispatch]);
 
-  //fetch states in store
-  const user = useSelector((state) => state.users);
-  const unsortedBooks = useSelector((state) => state.books);
+  //fetch borrowed books - stored in state.list1
+  useEffect(() => {
+    dispatch(getUserBorrowedBks());
+  }, [dispatch]);
 
-  const books = unsortedBooks.slice().sort();
+  //fetch pending requests - stored in state.list2
+  useEffect(()=>{
+    dispatch(getUserBookRequests());
+  }, [dispatch]);
+
+  //fetch booksincart
+  useEffect(() => {
+    dispatch(getUserBooksInCart())
+  }, [dispatch]);
+
+  //get all comments
+  useEffect(() => {
+    dispatch(getComments())
+  }, [dispatch]);
+
+  //fetch states in store
+  const user = useSelector(state => state.user);
+  const books = useSelector(state => state.books);
+  const pending = useSelector(state => state.pending);
+  const borrowedBooks = useSelector(state => state.borrowed);
+  const inCart = useSelector(state => state.incart);
+  const allComments = useSelector(state => state.comments);
+  
   //create state to shift through windows
   const [window, setWindow] = useState("home");
 
-  //filter out the unreturned books
-  const unreturnedBooks = user.booksBorrowed?.filter(book => book.returned === false);
+  //filter out the borrowed unreturned books
+  const unreturnedBooks = borrowedBooks?.filter(book => book.returned === false);
+
+  //to show a badge for late books alerts
+  const filteredBorrowed = borrowedBooks?.filter(book => (new Date(book.dateToReturn).getTime() < (new Date().getTime())) && (book.returned === false));
+
   //EVENT HANDLERS: WITH EACH HANDLER, REFRESH USER DETAILS
   //handle Logout
   const logOutuser = (e) => {
     e.preventDefault();
-    localStorage.removeItem("USER");
-    dispatch(logOut());
-    navigate("/");
+    dispatch(logOut(navigate));
   };
-  
+
   //handle Borrow Request
   const handleBorrow = (e, toBorrow) => {
     e.preventDefault();
     dispatch(sendBorrowRequest(toBorrow));
-    dispatch(getUserDetails(navigate));
+    dispatch(getUserBookRequests());
   };
 
   //handle cancel borrow
   const handleCancelBorrow = (e, toCancel) => {
     e.preventDefault();
     dispatch(cancelBookRequest(toCancel));
-    dispatch(getUserDetails(navigate));
+    dispatch(getUserBookRequests());
   };
 
   //handle add to Cart
   const handleAddToCart = (e, bookId) => {
     e.preventDefault();
     dispatch(addBookToCart(bookId));
-    dispatch(getUserDetails(navigate));
+    dispatch(getUserBooksInCart())
   };
 
   //handle Remove from cart
   const handleRemoveFromCart = (e, bookId) => {
     e.preventDefault();
     dispatch(removeFromCart(bookId));
-    dispatch(getUserDetails(navigate));
+    dispatch(getUserBooksInCart())
   };
 
   const [searchFilter, setSearchFilter] = useState(books);
-  
-  //to show a badge for alerts
-  const filteredBorrowed = user.booksBorrowed?.filter(book => (new Date(book.dateToReturn).getTime() < (new Date().getTime())) && (book.returned === false));
 
   //triggered while searching
   const search = (value) => {
-    if (value === null) {
+    if (value === null || value === '') {
       setSearchFilter(books);
     } else {
-      const filter = books.filter((book) =>
-        book.title.toLowerCase().includes(value.toLowerCase()) || book.author.toLowerCase().includes(value.toLowerCase()) || book.subject.toLowerCase().includes(value.toLowerCase()) || book.tags.filter(tag=>tag).includes(value)
+      const filter = books?.filter((book) =>
+        book.title?.toLowerCase().includes(value.toLowerCase()) || book.author?.toLowerCase().includes(value.toLowerCase()) || book.subject?.toLowerCase().includes(value.toLowerCase()) || book.tags?.filter(tag => tag).includes(value)
       );
       setSearchFilter(filter);
     }
   };
+  
 
   //create and handle Book Comments and reviews
   //comment object has: UserNames, book Id, commentBody, commentTime
   const handleComment = (comment) => {
-    dispatch(editBookDetails(comment))
+    dispatch(submitComment(comment));
+    dispatch(getComments);
   };
 
   //Handle book views - the number of times the book is clicked to sort books
   const handleViews = (edited) => {
     dispatch(editBookDetails(edited));
+  };
+
+  //Handle show comments(filter per book clicked);
+  const bookComments = (bookId) => {
+    const comments = allComments?.filter(comment => comment.book.id === bookId);     //comment.book is the Id of the book
+    return comments;
   };
 
   return (
@@ -169,29 +200,27 @@ export const UserDashboard = () => {
               <button  onClick={(e) => {
                 e.preventDefault();
                 setWindow("profile");
-              }}> <AccountCircle />Account</button>
+              }}> {user.profilePhoto ? (<img style={{ marginRight:10,width: 20, height: 20, borderRadius: '50%' }} src={user.profilePhoto} alt='img'></img>) : <AccountCircle />}Account</button>
               <button onClick={(e) => logOutuser(e)}> <Lock/> Logout</button>
             </div>
           </div>
         </div>
       </AppBar>
       <div style={{ marginTop: "75px" }}>
-        {window === "home" && (<Landing handleViews={handleViews} user={user} books={books} search={search} handleComment={handleComment} handleBorrow={handleBorrow} handleAddToCart={handleAddToCart} searchFilter={searchFilter} setSearchFilter={setSearchFilter} />)}
-        {window === "profile" && <Profile user={user} />}
-        {window === "cart" && (<Cart user={user} handleBorrow={handleBorrow} handleCancelBorrow={handleCancelBorrow} handleRemoveFromCart={handleRemoveFromCart} />)}
+        {window === "home" && (<Landing bookComments={bookComments} inCart={inCart} pending={pending} borrowedBooks={borrowedBooks} handleViews={handleViews} user={user} books={books} search={search} handleComment={handleComment} handleBorrow={handleBorrow} handleAddToCart={handleAddToCart} searchFilter={searchFilter} setSearchFilter={setSearchFilter} />)}
+        {window === "profile" && <Profile inCart={inCart} pending={pending} borrowed={borrowedBooks} user={user} />}
+        {window === "cart" && (<Cart inCart={inCart} pending={pending} borrowedBooks={borrowedBooks} user={user} handleBorrow={handleBorrow} handleCancelBorrow={handleCancelBorrow} handleRemoveFromCart={handleRemoveFromCart} />)}
       </div>
     </div>
   );
 };
 
 //User's Homepage
-const Landing = ({handleViews, books, user, handleComment, handleBorrow, handleAddToCart, search, searchFilter }) => {
-  const inCart = user.booksInCart;
-  const pending = user.bookRequests;
+const Landing = ({pending, inCart, bookComments, handleViews, books, user, handleComment, handleBorrow, handleAddToCart, search, searchFilter }) => {
 
   //check if book in cart already
   const checkInCart = (bookId) => {
-    const found = inCart.filter((book) => book._id === bookId);
+    const found = inCart?.filter((book) => book.id === bookId);
     if (found?.length > 0) {
       return "Book is Already in Cart";
     }
@@ -200,11 +229,11 @@ const Landing = ({handleViews, books, user, handleComment, handleBorrow, handleA
   //check if book already borrowed, and create alert
   //On submit, the method first checks if checkBorrowed returns anything
   const checkBorrowed = (bookId) => {
-    const borrowed = user.booksBorrowed.filter(
+    const borrowed = user.booksBorrowed?.filter(
       (book) => book.returned === false
     );
-    const found = pending.filter((book) => book.bookId._id === bookId);
-    const found2 = borrowed.filter((book) => book.bookId._id === bookId);
+    const found = pending?.filter((book) => book.book.id === bookId);
+    const found2 = borrowed?.filter((book) => book.book.id === bookId);
     if (found?.length > 0) {
       return "This book is being processed for you already";
     } else if (found2?.length > 0) {
@@ -215,30 +244,13 @@ const Landing = ({handleViews, books, user, handleComment, handleBorrow, handleA
   };
 
   //SORT BOOKS
-  const sortedFiltered = searchFilter.sort((x,y)=>+(y.views)-+(x.views))
+  const sortedFiltered = searchFilter?.sort((x,y)=>+(y.views)-+(x.views))
   
   //set Select a book, and set initial as the first book in the list on load
   const [book, setBook] = useState(null);
 
-
- /*  //FILTER ALL TAGS IN AN ARRAY WITHOUT REPLICATION
-  const allTagsArr = books.map(book => book.tags); //[[tagarr1], [tagarr2]...]
-  
-  //Function for any array concatentation such as tags, comments, etc
-  const uniqueArray = (arr) => {
-    const merged = [].concat.apply([], arr) //[tagArr1[1],tagArr1[2]...tagArrN[1] ]
-    let finalArr = [];
-    for (let i = 0; i <= merged.length; i++) {
-      if (!finalArr.includes(merged[i])) {
-        finalArr.push(merged[i])
-      }
-      i++;
-    }
-    return finalArr
-  }; */
-
   return (
-    <div style={{ margin:'auto' }}>
+    <div style={{ margin:'auto', overflowY:'hidden' }}>
       <h3>LIBRARY</h3>
       <hr/>
       <Container style={{ margin: "10px 0 0 0", width: "100%", display: "grid", gridTemplateColumns: "1fr 3fr 2fr" }}>
@@ -254,12 +266,10 @@ const Landing = ({handleViews, books, user, handleComment, handleBorrow, handleA
           <hr />
           <div>Advanced Search</div>
         </Container>
-        <Container
-          name="centerbar"
-          style={{ display: "flex", flexDirection: "column" }}>
+        <Container name="centerbar" style={{ display: "flex", flexDirection: "column", overflowY:'scroll' }}>
           <Grid container>
             {!sortedFiltered?.length > 0 ? "No Matching Results" : sortedFiltered.map((book) => (
-              <Container key={book._id} style={{ display: "flex", flexDirection: "column", fontSize: "0.75rem", borderBottom: "solid 1px", padding: "5px", textAlign: "left", width: "100%", cursor: "pointer", }} onClick={(e) => {
+              <Container key={book.id} style={{ display: "flex", flexDirection: "column", fontSize: "0.75rem", borderBottom: "solid 1px", padding: "5px", textAlign: "left", width: "100%", cursor: "pointer", }} onClick={(e) => {
                 e.preventDefault();
                 /*ON click, set view of the book to +1 */
                 const currentViews = book.views++;
@@ -280,7 +290,7 @@ const Landing = ({handleViews, books, user, handleComment, handleBorrow, handleA
             ))}
           </Grid>
         </Container>
-        <Container name="rightbar" style={{ borderLeft: "1px solid" }}>
+        <Container name="rightbar" style={{ borderLeft: "1px solid", overflowY:'scroll'}}>
           {!book ? 'Select a Book to See Details / review / comment' : (
             <div style={{ width: "100%", justifyContent: "left" }}>
               <div>
@@ -302,7 +312,7 @@ const Landing = ({handleViews, books, user, handleComment, handleBorrow, handleA
                     </div>
                   </div>
                   <p>Preview: {book.preview}</p>
-                  <p>Tags: {book.tags?.map((tag) => <button onClick={e => {
+                  <p>Tags: {book.tags?.map((tag) => <button key={tag.index} onClick={e => {
                     e.preventDefault();
                     document.getElementById('searchBar').value = `#${tag}`;
                     search(tag)
@@ -311,9 +321,9 @@ const Landing = ({handleViews, books, user, handleComment, handleBorrow, handleA
                     <div>
                     <Button variant='outlined' onClick={(e) => {
                       e.preventDefault();
-                      const toBorrow = { bookId: book._id };
-                      if (checkBorrowed(book._id)) {
-                        alert(checkBorrowed(book._id));
+                      const toBorrow = { bookId: book.id };
+                      if (checkBorrowed(book.id)) {
+                        alert(checkBorrowed(book.id));
                         return;
                       } else {
                         handleBorrow(e, toBorrow);
@@ -324,18 +334,18 @@ const Landing = ({handleViews, books, user, handleComment, handleBorrow, handleA
                   </Button>
                   <Button variant='outlined' onClick={(e) => {
                       e.preventDefault();
-                      if (checkInCart(book._id)) {
-                        alert(checkInCart(book._id));
+                      if (checkInCart(book.id)) {
+                        alert(checkInCart(book.id));
                         return;
                       } else {
-                        handleAddToCart(e, book._id);
+                        handleAddToCart(e, book.id);
                         alert("Adding to Cart");
                       }
                     }}>
                     <AddShoppingCart />
                   </Button>
                     </div>
-                    <Visibility /> {book.views ? book.views : 0}
+                    {/* <Visibility /> {book.views ? book.views : 0} */}
                     </div>
                   <div>
                     <h4>Comments</h4>
@@ -343,34 +353,31 @@ const Landing = ({handleViews, books, user, handleComment, handleBorrow, handleA
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>Leave a review/Comment
                       <Button onClick={(e) => {
                         e.preventDefault();
-                        let allComments = book.comments;
+                        console.log(book.id)
                         const newComment = {
-                          byName: user.firstName,
-                          byPic: user.profilePhoto,
-                          byId: user._id,
-                          date: new Date().toLocaleString(),
+                          book:book.id,
                           body: document.getElementById('comment').value
                         };
-                        allComments.push(newComment)
-                        const toEdit = { ...book, comments: allComments };
-                        handleComment(toEdit);
+                        handleComment(newComment);
                         document.getElementById('comment').value = ''
                       }}>Submit</Button>
                     </div>
                     <p></p>
                     <textarea style={{ width: '95%', fontFamily: 'inherit', fontSize:'1rem', color: 'black', border: 'none', borderBottom: 'solid black 2px' }} type="text" id="comment" placeholder="Comment..." />
-                    <p>Previous Comments {book.comments?.length}</p>
-                    {book.comments?.map(comment =>
+                    <p>Previous Comments {bookComments(book.id)?.length}</p>
+                    {bookComments(book.id)?.map(comment =>
                       <div style={{ mrginLeft: '30px', paddingBottom: '10px' }}>
                         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', flexDirection: 'row' }}>
-                            {comment.byPic ? (<img style={{ width: 30, height: 30, borderRadius: '50%', marginRight: '10px' }} src={comment.byPic} alt='img'></img>) : <AccountCircle />}
-                            <div>{comment.byName}
+                            {comment.by.profilePhoto ? (<img style={{ width: 30, height: 30, borderRadius: '50%', marginRight: '10px' }} src={comment.by.profilePhoto} alt='img'/>) : <AccountCircle />}
+                            <div>{comment.by.firstName}
                               <div style={{ fontStyle: 'italic', fontSize: '0.7rem' }}>{moment(comment.date).fromNow()}</div>
                             </div>
                           </div>
                           <div>
-                            {user._id === comment.byId ? <Button type='text'>Share</Button> : (<div><Button type='text'>Like</Button><Button type='text'>Share</Button></div>)}</div>
+                            {/*Like comment and share */}
+                            {user.id === comment.by.id ? <Button type='text'>Share</Button> : (<div><Button type='text'>Like</Button><Button type='text'>Share</Button></div>)}
+                          </div>
                         </div>
                         <div>{comment.body}</div>
                       </div>)}
@@ -395,11 +402,12 @@ const fines = (date2, date1) => {
   };
 
   //profile component: editing, mesages, notifications/alerts
-const Profile = ({ user }) => {
+const Profile = ({ user, inCart, pending, borrowed }) => {
   const dispatch = useDispatch();
   const [noEdit, setNoEdit] = useState(true); //onclick edit
 
   const [edited, setEdited] = useState(user);
+  const [changePass, setChangePass] = useState(false)
 
   //Edit profile submit
   const handleSubmit = (e) => {
@@ -411,14 +419,14 @@ const Profile = ({ user }) => {
         dispatch(editProfile(edited));
       } else alert("Not Saved");
       setNoEdit(true);
-    }
+    };
   };
 
   //Edit User Details, and delete etc
   const editingFunc = (e, changed) => {
     e.preventDefault();
     dispatch(editProfile(changed))
-  }
+  };
 
   const [expand, setExpand] = useState({
     id: null,
@@ -426,7 +434,7 @@ const Profile = ({ user }) => {
   });
 
   //Filter Books with fines for alerts
-  const filteredBorrowed = user.booksBorrowed.filter(book => (new Date(book.dateToReturn).getTime() < (new Date().getTime())) && (book.returned === false));
+  const filteredBorrowed = user.booksBorrowed?.filter(book => (new Date(book.dateToReturn).getTime() < (new Date().getTime())) && (book.returned === false));
 
   //SORT
   //sorted notifications according to timestamp
@@ -451,12 +459,12 @@ const Profile = ({ user }) => {
           <div id='messages'>
             <h4>Messages {user.messages?.length}</h4>
             {sortedMessages?.slice(0, moreMsg).map(message =>
-              <div key={message._id} onMouseOver={(e) => setExpand({ id: message._id, state: true })}>
-                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>{message.sender} {expand.id === message._id ? <button onClick={e => {
-                  const remaining = user.messages.filter((msg) => msg._id !== message._id)
+              <div key={message.id} onMouseOver={(e) => setExpand({ id: message.id, state: true })}>
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>{message.sender} {expand.id === message.id ? <button onClick={e => {
+                  const remaining = user.messages.filter((msg) => msg.id !== message.id)
                   editingFunc(e, { ...edited, messages: remaining })
                 }}>x</button> : null}</div>
-                <div>{(expand.id === message._id && expand.state) ? message.body : (`${message.body.substring(0, 70)}...`)}</div>
+                <div>{(expand.id === message.id && expand.state) ? message.body : (`${message.body.substring(0, 70)}...`)}</div>
                 <div style={{ color: "grey", fontSize: "0.75rem", textAlign: "right" }}>{moment(new Date(message.time).toLocaleString()).fromNow()}</div>
                 <hr />
               </div>
@@ -470,12 +478,12 @@ const Profile = ({ user }) => {
           </div>
           <div id='notifications'><h4>Notifications {user.notifications?.length}</h4>
             {sortedNotifications?.slice(0, moreNotes).map(note =>
-              <div key={note._id} onMouseOver={(e) => setExpand({ id: note._id, state: true })}>
-                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', fontStyle: 'italic' }}>{note.sender} {expand.id === note._id ? <button onClick={e => {
-                  const remaining = user.notifications.filter((msg) => msg._id !== note._id)
+              <div key={note.id} onMouseOver={(e) => setExpand({ id: note.id, state: true })}>
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', fontStyle: 'italic' }}>{note.sender} {expand.id === note.id ? <button onClick={e => {
+                  const remaining = user.notifications.filter((msg) => msg.id !== note.id)
                   editingFunc(e, { ...edited, notifications: remaining })
                 }}>x</button> : null}</div>
-                <div onMouseOut={e => setExpand({ id: null, state: false })}>{(expand.id === note._id && expand.state) ? note.body : (`${note.body.substring(0, 70)}...`)}</div>
+                <div onMouseOut={e => setExpand({ id: null, state: false })}>{(expand.id === note.id && expand.state) ? note.body : (`${note.body.substring(0, 70)}...`)}</div>
                 <div style={{ color: "grey", fontSize: "0.75rem", textAlign: "right" }}>{moment(new Date(note.time).toLocaleString()).fromNow()}</div>
                 <hr />
               </div>
@@ -521,9 +529,9 @@ const Profile = ({ user }) => {
               <div> <p> Residential Address: {user?.userAddress?.town} Town in {user?.userAddress?.county} County, {user?.userAddress?.country}</p></div>
               <hr />
               <h5>Statistics</h5>
-              <div><p>Pending Orders Placed: {user?.bookRequests.length}</p></div>
-              <div><p>Saved Books in Cart: {user?.booksInCart.length}</p></div>
-              <div><p>Borrowed Books(history): {user?.booksBorrowed.length}</p></div>
+              <div><p>Pending Orders Placed: {pending?.length}</p></div>
+              <div><p>Saved Books in Cart: {inCart?.length}</p></div>
+              <div><p>Borrowed Books(history): {borrowed?.length}</p></div>
             </div>
           ) : (
             <form style={{ paddingLeft: '30px', paddingRight: '30px' }}>
@@ -558,7 +566,7 @@ const Profile = ({ user }) => {
               <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}> Gender:
                 <Input style={{ margin: '10px' }} value={edited.gender} name="gender" onChange={(e) => setEdited({ ...edited, gender: e.target.value })} /> </div>
               <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}> Date Of Birth:
-                <Input style={{ margin: '10px' }} type='date' value={new Date(edited.dateOfBirth).toLocaleDateString()} name="firstName" onChange={(e) => setEdited({ ...edited, dateOfBirth: new Date(e.target.value) })} /> </div>
+                <Input style={{ margin: '10px' }} type='date' value={edited.dateOfBirth} name="dateOfBirth" onChange={(e) => setEdited({ ...edited, dateOfBirth: e.target.value })} /> </div>
               <div>
                 <hr />
                 <h5>Change Residential Address</h5>
@@ -569,7 +577,12 @@ const Profile = ({ user }) => {
               <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}> Town:
                 <Input style={{ margin: '10px' }} name="address" value={edited.userAddress?.town} onChange={(e) => setEdited({ ...edited, userAddress: { ...edited.userAddress, town: e.target.value } })} /> </div>
               <hr />
-              <h5>Change Password</h5>
+                <h5>Change Password</h5>
+                <Button variant="text" style={{ width: '2rem', height: '1rem' }} onClick={(e) => {
+                  e.preventDefault();
+                  setChangePass(!changePass);
+                }}>{changePass ? 'Submit' : <Edit />}</Button>
+                {changePass ? (<div>
               <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}> Enter New Password:
                 <Input style={{ margin: '10px' }} name="address" placeholder='New Password' onChange={(e) => setEdited({ ...edited, userPassword: e.target.value })} /> </div>
               <div>{passWarning}</div>
@@ -578,25 +591,27 @@ const Profile = ({ user }) => {
                   if (edited.userPassword !== e.target.value) {
                     setPassWarning('Passwords do Not Match')
                   } else setPassWarning(null)
-                }} /> </div>
+                }} /> </div></div>) : 'Click to change password'}
               <hr />
               <hr />
               <h5>Delete Account</h5>
               <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}> Confirm Your Password:
                 <Input placeholder='Enter Password'/>
-                <button>Delete</button>
+                  <button onClick={e => {
+                    
+                }}>Delete</button>
               </div>
             </form>
           )}
         </Container>
         <div id="recent-activity">
           <h3>Notice Board</h3>
-          <div><h4>{filteredBorrowed?.length > 1 ? (<Badge badgeContent={filteredBorrowed.length} color='error'> You Have Accumulated Fines</Badge>) : null}</h4></div>
-          {filteredBorrowed.map(book =>
+          <div><h4>{filteredBorrowed?.length > 1 ? (<Badge badgeContent={filteredBorrowed?.length} color='error'> You Have Accumulated Fines</Badge>) : null}</h4></div>
+          {filteredBorrowed?.map(book =>
             <div>
               <h5>{book.bookId.title}</h5>
               <div style={{ display: 'grid', gridTemplateColumns: '0.25fr 1fr' }}>
-                <img style={{ width: "40px", height: "50px", margin: "3px" }} src={book.bookId.coverImage} alt='bookCover' />
+                <img style={{ width: "40px", height: "50px", margin: "3px" }} src={book.bookId?.coverImage} alt='bookCover' />
                 <div>
                   <div>Date Expected: {moment(book.dateToReturn).fromNow()} </div>
                   <div style={{ color: 'red' }}> Fines Accumulated:   {fines(new Date(), new Date(book.dateToReturn)) < 1 ? `KES 0.00` : `KES ${fines(new Date(), new Date(book.dateToReturn))}`} </div>
@@ -611,23 +626,16 @@ const Profile = ({ user }) => {
 };
 
 //the store
-const Cart = ({
-  user,
-  handleBorrow,
-  handleCancelBorrow,
-  handleRemoveFromCart,
-}) => {
+const Cart = ({user, inCart, handleBorrow, handleCancelBorrow, handleRemoveFromCart,booksBorrowed,pending}) => {
   //lists
-  const inCart = user.booksInCart;
-  const pending = user.bookRequests;
-  const borrowed = user.booksBorrowed.filter((book) => book.returned === false);
-  const borrowHistory = user.booksBorrowed;
+  const borrowed = booksBorrowed?.filter((book) => book.returned === false);
+  const borrowHistory = booksBorrowed;
 
   //check if book already borrowed, and create alert
   //On submit, the method first checks if checkBorrowed returns anything
   const checkBorrowed = (bookId) => {
-    const found = pending.filter((book) => book.bookId._id === bookId);
-    const found2 = borrowed.filter((book) => book.bookId._id === bookId);
+    const found = pending?.filter((book) => book.bookId.id === bookId);
+    const found2 = borrowed?.filter((book) => book.bookId.id === bookId);
     if (found?.length > 0) {
       return "This book is being processed for you already";
     } else if (found2?.length > 0) {
@@ -637,6 +645,7 @@ const Cart = ({
     }
   };
 
+
   return (
     <div>
       <h3>My Store - {user.firstName} {user.lastName}</h3>
@@ -644,47 +653,23 @@ const Cart = ({
         <Container>
           In Cart
           <Grid container>
-            {!inCart
-              ? "Data Not Available"
-              : inCart.length < 1
-                ? "No Books In Cart"
-                : inCart.map((book) => (
-                  <Container
-                    key={book._id}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      fontSize: "0.75rem",
-                      borderBottom: "solid 1px",
-                      padding: "5px",
-                      textAlign: "left",
-                      width: "100%",
-                      cursor: "pointer",
-                    }}
-                  >
+            {!inCart? "Data Not Available": inCart.length < 1 ? "No Books In Cart" : inCart.map((saved) => (
+                  <Container key={saved.id} style={{display: "flex",flexDirection: "column",fontSize: "0.75rem",borderBottom: "solid 1px",padding: "5px",textAlign: "left", width: "100%", cursor: "pointer"}}>
                     <div>
                       <div style={{ display: "flex", flexDirection: "row" }}>
-                        <img
-                          src={book.coverImage}
-                          alt="img"
-                          style={{ width: "40px", height: "50px", margin: "3px" }}
-                        />
+                        <img src={saved.book.coverImage} alt="img" style={{ width: "40px", height: "50px", margin: "3px" }}/>
                         <div>
-                          <p>{book.title}</p>
-                          <p>
-                            {" "}
-                            Author: {book.author}.{book.noOfPages}pgs
-                          </p>
+                          <p>{saved.book.title}</p>
+                          <p>Author: {saved.book.author}.{saved.book.noOfPages}pgs </p>
                         </div>
                       </div>
                     </div>
                     <div>
-                      <button
-                        onClick={(e) => {
+                      <button onClick={(e) => {
                           e.preventDefault();
-                          const toBorrow = { bookId: book._id };
-                          if (checkBorrowed(book._id)) {
-                            alert(checkBorrowed(book._id));
+                          const toBorrow = { bookId: saved.book.id };
+                          if (checkBorrowed(saved.book.id)) {
+                            alert(checkBorrowed(saved.book.id));
                             return;
                           } else {
                             handleBorrow(e, toBorrow);
@@ -692,9 +677,8 @@ const Cart = ({
                           }}}>
                         Borrow
                       </button>
-                      <button
-                        onClick={(e) => {
-                          handleRemoveFromCart(e, book._id);
+                      <button onClick={(e) => {
+                          handleRemoveFromCart(e, saved.id);
                         }}>
                         Remove
                       </button>
@@ -706,15 +690,15 @@ const Cart = ({
         <Container>
           Pending Requests
           <Grid container>
-            {!pending? "Data not Available": pending.length < 1? "no Pending Requests": pending.map((book) => (
-                  <Container key={book._id} style={{ display: "flex", flexDirection: "column", fontSize: "0.75rem", borderBottom: "solid 1px", padding: "5px", textAlign: "left", width: "100%",cursor: "pointer",
+            {!pending? "Data not Available": pending.length < 1? "no Pending Requests": pending.map((req) => (
+                  <Container key={req.id} style={{ display: "flex", flexDirection: "column", fontSize: "0.75rem", borderBottom: "solid 1px", padding: "5px", textAlign: "left", width: "100%",cursor: "pointer",
                     }}>
                     <div>
                       <div style={{ display: "flex", flexDirection: "row" }}>
-                        <img src={book.bookId.coverImage} alt="img" style={{ width: "40px", height: "50px", margin: "3px" }}/>
+                        <img src={req.book.coverImage} alt="img" style={{ width: "40px", height: "50px", margin: "3px" }}/>
                         <div>
-                          <p>{book.bookId.title}</p>
-                          <p>Author: {book.bookId.author}.{book.bookId.noOfPages} pgs
+                          <p>{req.book.title}</p>
+                          <p>Author: {req.book.author}.{req.book.noOfPages} pgs
                           </p>
                         </div>
                       </div>
@@ -722,8 +706,7 @@ const Cart = ({
                     <div>
                       <button
                         onClick={(e) => {
-                          const toCancel = { bookId: book.bookId._id };
-                          handleCancelBorrow(e, toCancel);
+                          handleCancelBorrow(e, req.id);
                         }}>
                         Cancel
                       </button>
@@ -737,7 +720,7 @@ const Cart = ({
           <Grid container>
             {!borrowed ? "Data Not Available" : borrowed.length < 1 ? "no Pending Requests" : borrowed.map((book) => (
               <Container
-                key={book._id}
+                key={book.id}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -751,13 +734,13 @@ const Cart = ({
                 <div>
                   <div style={{ display: "flex", flexDirection: "row" }}>
                     <img
-                      src={book.bookId.coverImage}
+                      src={book.book.coverImage}
                       alt="img"
                       style={{ width: "40px", height: "50px", margin: "3px" }}
                     />
                     <div>
-                      <p>{book.bookId.title}</p>
-                      <p> Author: {book.bookId.author}</p>
+                      <p>{book.book.title}</p>
+                      <p> Author: {book.book.author}</p>
                     </div>
                   </div>
                 </div>
@@ -785,7 +768,7 @@ const Cart = ({
                 ? "no Pending Requests"
                 : borrowHistory.map((book) => (
                   <Container
-                    key={book._id}
+                    key={book.id}
                     style={{
                       display: "flex",
                       flexDirection: "column",
@@ -800,13 +783,13 @@ const Cart = ({
                     <div>
                       <div style={{ display: "flex", flexDirection: "row" }}>
                         <img
-                          src={book.bookId.coverImage}
+                          src={book.book.coverImage}
                           alt="img"
                           style={{ width: "40px", height: "50px", margin: "3px" }}
                         />
                         <div>
-                          <p>{book.bookId.title}</p>
-                          <p> Author: {book.bookId.author}</p>
+                          <p>{book.book.title}</p>
+                          <p> Author: {book.book.author}</p>
                         </div>
                       </div>
                     </div>

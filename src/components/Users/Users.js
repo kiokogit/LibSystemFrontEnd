@@ -18,7 +18,7 @@ export const Users = () => {
             USERS LIST
             <Table >
                 {users.map((user) =>
-                    <TableBody  key={user._id}>
+                    <TableBody  key={user.id}>
                         <User user={user} />
                     </TableBody>)
                 }

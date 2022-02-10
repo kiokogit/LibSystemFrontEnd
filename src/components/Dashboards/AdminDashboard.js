@@ -1,62 +1,70 @@
 import React, { useEffect, useState} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom';
+import FileBase from 'react-file-base64';
 
 import { AppBar, Paper, Button, Card, Badge, Table, TableBody, TableCell, TableRow, TableHead, TextField, Typography, Container } from '@material-ui/core';
 
-import { checkInABook, checkOutABook, pendingRequests, unReturnedBooks, checkOutManually, getUsers } from '../../actions/adminActions/adminActions';
+import { editBookDetails, checkInABook, checkOutABook, pendingRequests, unReturnedBooks, checkOutManually, getUsers, getUserDetails, deleteBook } from '../../actions/adminActions/adminActions';
 import { getBooks} from '../../actions/adminActions/otherActions/actions';
 import { EditForm } from '../EditBook/EditForm';
+import { logOut } from '../../actions/userActions/userActions';
+
 
 export const AdminDashboard = () => {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const admin = JSON.parse(localStorage.getItem('USER')).data;
-
     //create state to manage windows
     const [window, setWindow] = useState('home');
-    const handleLogOut = (e) => {
-        e.preventDefault();
-        localStorage.removeItem('USER');
-        navigate('/');
-    };
-
+    
     //OTHER WINDOWS OBJECTS
+    
+    //fetch user details
+  useEffect(() => {
+    dispatch(getUserDetails());
+  }, [dispatch]);
     //Returning Books
     useEffect(() => {
         dispatch(unReturnedBooks());
     }, [dispatch]);
-
-    const borrowedBooks= useSelector(state => state.list2);
-
     //Borrowing
     useEffect(() => {
         dispatch(pendingRequests());
     }, [dispatch]);
-
-    const borrowRequests = useSelector(state => state.list);
-
     //Editing
     useEffect(() => {
         dispatch(getBooks());
     }, [dispatch])
-
+    //GET ALL USERS
+    useEffect(() => {
+        dispatch(getUsers());
+    }, [dispatch]);
+    
+    const borrowed= useSelector(state => state.borrowed);
+    const pending = useSelector(state => state.pending);
     const books = useSelector((state) => state.books);
+    const users = useSelector((state) => state.users);
+    const user = useSelector((state)=>state.user)
 
     //HANDLERS
      //auto borrowing
      const handleCheckOut = (e, rqstId) => {
         e.preventDefault();
-        dispatch(checkOutABook(rqstId));
+         dispatch(checkOutABook(rqstId));
+         dispatch(pendingRequests());
     };
+    //HANDLE LOGOUT
+    const handleLogOut = (e) => {
+        e.preventDefault();
+        dispatch(logOut(navigate));
+        
+    };
+    
 
-    //GET ALL USERS
-    useEffect(() => {
-        dispatch(getUsers());
-    })
-    const users = useSelector((state) => state.users);
+//implement a MULTIPURPOSE SEARCH BAR - FOR ALL, EITHER REQUESTS, OR USERS ETC
+  
 
     return (
         <div id='adminDash'>
@@ -65,7 +73,7 @@ export const AdminDashboard = () => {
                     e.preventDefault();
                     setWindow('home')
                 }}>Home</button>
-                <div>Welcome, {admin.name}</div>
+                <div>Welcome, {user.firstName}</div>
                 <button onClick={(e) => { handleLogOut(e) }}>Logout</button>
             </AppBar>
             <div style={{ display: 'flex', flexDirection: 'row', width: '100%', marginTop: '75px' }}>
@@ -102,11 +110,11 @@ export const AdminDashboard = () => {
                     </Card>
                 </Container>
                 <div style={{ width: '80%' }}>
-                    {window === 'home' && <Home setWindow={setWindow} />}
-                    {window === 'addBook' && <AddNewBook books={books}/>}
-                    {window === 'lendOut' && <LendBooks handleCheckOut={handleCheckOut} borrowRequests={borrowRequests} borrowedBooks={borrowedBooks}/>}
-                    {window === 'returnBooks' && <ReturnABook borrowedBooks={borrowedBooks} />}
-                    {window === 'explore' && <ExploreBooks />}
+                    {window === 'home' && <Home setWindow={setWindow} pending={pending} />}
+                    {window === 'addBook' && <AddNewBook books={books} />}
+                    {window === 'lendOut' && <LendBooks handleCheckOut={handleCheckOut} borrowRequests={pending} borrowedBooks={borrowed} />}
+                    {window === 'returnBooks' && <ReturnABook borrowedBooks={borrowed} />}
+                    {window === 'explore' && <ExploreBooks books={books} />}
                     {window === 'users' && <ShowUsers users={users} />}
                 </div>
             </div>
@@ -115,61 +123,54 @@ export const AdminDashboard = () => {
 };
 
 //home drawer:
-const Home = ({ setWindow }) => {
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        dispatch(pendingRequests());
-    });
-
-    const list = useSelector(state => state.list);
+const Home = ({ setWindow, pending }) => {
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly', paddingTop: '50px'}}>
-                <Card size='lg' align='center' style={{ borderRadius: '50%', height: '7rem', width: '7rem', backgroundColor: 'blue' }}>
-                    <Button style={{ marginTop: 25 }} onClick={(e) => {
-                        e.preventDefault();
-                        setWindow('addBook')
-                    }}>Add A New Book</Button>
-                </Card>
-                <Card size='lg' align='center' style={{ borderRadius: '50%', height: '7rem', width: '7rem', backgroundColor: 'green', marginTop: '100px' }}>
-                    <Button style={{ marginTop: 25 }} onClick={(e) => {
-                        e.preventDefault();
-                        setWindow('lendOut')
-                    }}>
-                        Lend Out Books
-                        <Badge badgeContent={!list ? 0 : list.length} color='error'>  {/*Fetch number pending book borrow requests*/}
-                        </Badge>
-                    </Button>
-                </Card>
-                <Card size='lg' align='center' style={{ borderRadius: '50%', height: '7rem', width: '7rem', backgroundColor: 'brown', marginTop: '75px' }}>
-                    <Button style={{ marginTop: 25 }} onClick={(e) => {
-                        e.preventDefault();
-                        setWindow('returnBooks')
-                    }}>Return a Book</Button>
-                </Card>
-                <Card size='lg' align='center' style={{ borderRadius: '50%', height: '7rem', width: '7rem', backgroundColor: 'purple', marginTop: '120px' }}>
-                    <Button style={{ marginTop: 25 }} onClick={(e) => {
-                        e.preventDefault();
-                        setWindow('explore')
-                    }}>Explore Books</Button>
-                </Card>
-                <Card size='lg' align='center' style={{ borderRadius: '50%', height: '7rem', width: '7rem', backgroundColor: 'orange', marginTop: '50px' }}>
-                    <Button style={{ marginTop: 25 }} onClick={(e) => {
-                        e.preventDefault();
-                        setWindow('users')
-                    }}>View Users</Button>
-                </Card>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly', paddingTop: '50px' }}>
+            <Card size='lg' align='center' style={{ borderRadius: '50%', height: '7rem', width: '7rem', backgroundColor: 'blue' }}>
+                <Button style={{ marginTop: 25 }} onClick={(e) => {
+                    e.preventDefault();
+                    setWindow('addBook')
+                }}>Add A New Book</Button>
+            </Card>
+            <Card size='lg' align='center' style={{ borderRadius: '50%', height: '7rem', width: '7rem', backgroundColor: 'green', marginTop: '100px' }}>
+                <Button style={{ marginTop: 25 }} onClick={(e) => {
+                    e.preventDefault();
+                    setWindow('lendOut')
+                }}>
+                    Lend Out Books
+                    <Badge badgeContent={!pending ? 0 : pending.length} color='error'>  {/*Fetch number pending book borrow requests*/}
+                    </Badge>
+                </Button>
+            </Card>
+            <Card size='lg' align='center' style={{ borderRadius: '50%', height: '7rem', width: '7rem', backgroundColor: 'brown', marginTop: '75px' }}>
+                <Button style={{ marginTop: 25 }} onClick={(e) => {
+                    e.preventDefault();
+                    setWindow('returnBooks')
+                }}>Return a Book</Button>
+            </Card>
+            <Card size='lg' align='center' style={{ borderRadius: '50%', height: '7rem', width: '7rem', backgroundColor: 'purple', marginTop: '120px' }}>
+                <Button style={{ marginTop: 25 }} onClick={(e) => {
+                    e.preventDefault();
+                    setWindow('explore')
+                }}>Explore Books</Button>
+            </Card>
+            <Card size='lg' align='center' style={{ borderRadius: '50%', height: '7rem', width: '7rem', backgroundColor: 'orange', marginTop: '50px' }}>
+                <Button style={{ marginTop: 25 }} onClick={(e) => {
+                    e.preventDefault();
+                    setWindow('users')
+                }}>View Users</Button>
+            </Card>
+        </div>
     )
-}
+};
 
 //lend out books
 const LendBooks = ({borrowRequests, borrowedBooks, handleCheckOut}) => {
     const dispatch = useDispatch();
     
     const [details, setDetails] = useState({
-        bookId: '',
+        book: '',
         userEmail:''
     })
 
@@ -180,11 +181,8 @@ const LendBooks = ({borrowRequests, borrowedBooks, handleCheckOut}) => {
     };
 
     //check if a book is already borrowed, to prevent duplicate key errors
-
-    console.log(borrowedBooks);
-    console.log(borrowRequests)
     const availability = (reqst) => {
-        const available = borrowedBooks.filter(book => book.bookId._id === reqst.bookId._id);
+        const available = borrowedBooks.filter(book => book.book.id === reqst.book.id);
         if (available.length > 0) return 1;
         else return 0
     };
@@ -205,13 +203,13 @@ const LendBooks = ({borrowRequests, borrowedBooks, handleCheckOut}) => {
                         </TableHead>
                         <TableBody>
                             {borrowRequests.map((reqst) =>
-                                <TableRow key={reqst._id}>
-                                    <TableCell> <img src={reqst.bookId? reqst.bookId.coverImage:null } alt='coverImg' style={{ width: '40px', height: '50px', margin:'3px'}} /> </TableCell>
-                                    <TableCell> {!reqst.bookId? 'No Book Data':reqst.bookId.title} </TableCell>
-                                    <TableCell> {!reqst.bookId? 'No Book Data':reqst.userId.userEmail} </TableCell>
+                                <TableRow key={reqst.id}>
+                                    <TableCell> <img src={reqst.book? reqst.book.coverImage:null } alt='coverImg' style={{ width: '40px', height: '50px', margin:'3px'}} /> </TableCell>
+                                    <TableCell> {!reqst.book? 'No Book Data':reqst.book.title} </TableCell>
+                                    <TableCell> {!reqst.book? 'No Book Data':reqst.by.userEmail} </TableCell>
                                     <TableCell>
                                         { availability(reqst)===1 ? 'Book Not Available' :
-                                            <Button aria-label='Click to check book out' onClick={(e) => handleCheckOut(e, reqst._id)}>
+                                            <Button aria-label='Click to check book out' onClick={(e) => handleCheckOut(e, reqst.id)}>
                                                 Check Out
                                             </Button>}
                                     </TableCell>
@@ -224,7 +222,7 @@ const LendBooks = ({borrowRequests, borrowedBooks, handleCheckOut}) => {
                 <Container style={{width:'400px'}}>
                     <Paper>
                         <Typography>Check out Manually</Typography>
-                        <TextField label='Enter Book ID' onChange={(e)=>setDetails({...details, bookId:e.target.value})}/>
+                        <TextField label='Enter Book ID' onChange={(e)=>setDetails({...details, book:e.target.value})}/>
                         <TextField label='Enter User EMAIL' onChange={(e)=>setDetails({...details, userEmail:e.target.value})}/>
                         <Button onClick={(e) => {
                             manuallyCheckOut(e, details)
@@ -277,16 +275,16 @@ const ReturnABook = ({borrowedBooks}) => {
                         </TableHead>
                         <TableBody>
                             {borrowedBooks.map((brrw) =>
-                                <TableRow key={brrw._id}>
-                                    <TableCell> <img src={brrw.bookId.coverImage} alt='coverImg' style={{ width: '40px', height: '50px', margin:'3px'}} /> </TableCell>
-                                    <TableCell> {brrw.bookId.title} </TableCell>
-                                    <TableCell> {brrw.userId.userEmail}</TableCell>
+                                <TableRow key={brrw.id}>
+                                    <TableCell> <img src={brrw.book.coverImage} alt='coverImg' style={{ width: '40px', height: '50px', margin:'3px'}} /> </TableCell>
+                                    <TableCell> {brrw.book.title} </TableCell>
+                                    <TableCell> {brrw.by.userEmail}</TableCell>
                                     <TableCell> {new Date(brrw.dateBorrowed).toLocaleDateString()} </TableCell>
                                     <TableCell> {new Date(brrw.dateToReturn).toLocaleDateString()} </TableCell>
                                     <TableCell> {fines(new Date(), new Date(brrw.dateToReturn))<1? 0: `KES ${fines(new Date(), new Date(brrw.dateToReturn))}`} </TableCell>
                                     <TableCell>
                                         <Button aria-label='Click to check book in' onClick={(e) => {
-                                            handleCheckIn(e, brrw._id)
+                                            handleCheckIn(e, brrw.id)
                                         }}>
                                             Check In
                                         </Button>
@@ -315,6 +313,7 @@ const AddNewBook = () => {
     //set state for windows
     const [method, setMethod] = useState('manual')
     const [bookDetails, setbookDetails] = useState({});
+
     return (
         <div>
             <h3>ADD A NEW BOOK TO THE LIBRARY</h3>
@@ -326,29 +325,24 @@ const AddNewBook = () => {
                 e.preventDefault();
                 setMethod('auto');
             }}>Scan RFID</button>
-            {method === 'manual' && <EditForm bookDetails={bookDetails}  setbookDetails={setbookDetails}  />}
-            {method==='auto' && (<Container>
-                    <Paper align='center' style={{ width:'400px', margin:'50px', display:'flex', flexDirection:'column'}}>
-                        <Typography>Scan RFID Tag</Typography>
-                        <TextField variant='filled' label='Waiting for Scanner...' />
-                        <Button >Submit</Button>
-                    </Paper>
-                </Container>)}
+            {method === 'manual' && <EditForm bookDetails={bookDetails} setbookDetails={setbookDetails} />}
+            {method === 'auto' && (<Container>
+                <Paper align='center' style={{ width: '400px', margin: '50px', display: 'flex', flexDirection: 'column' }}>
+                    <Typography>Scan RFID Tag</Typography>
+                    <TextField variant='filled' label='Waiting for Scanner...' />
+                    <Button >Submit</Button>
+                </Paper>
+            </Container>)}
         </div>
     );
 };
 
-const ExploreBooks = () => {
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        dispatch(getBooks());
-    }, [dispatch])
-
-    const books = useSelector((state) => state.books)
+const ExploreBooks = ({books}) => {
 
     //set state for the selected book
     const [book, setBook] = useState(null);
+    const [draw, setDraw] = useState(null);
+    const [message, setMessage] = useState(null)
 
     return (
         <div style={{ maxHeight: '700px', overflowY: 'unset' }}>
@@ -359,7 +353,8 @@ const ExploreBooks = () => {
                         {books?.map((book) =>
                             <Container onClick={(e) => {
                                 setBook(book)
-                            }} key={book._id} style={{ display: 'flex', flexDirection: 'row', fontSize: '0.75rem', borderBottom: 'solid 1px', padding: '5px', textAlign: 'left', width: '100%', cursor: 'pointer' }}>
+                                setDraw('details')
+                            }} key={book.id} style={{ display: 'flex', flexDirection: 'row', fontSize: '0.75rem', borderBottom: 'solid 1px', padding: '5px', textAlign: 'left', width: '100%', cursor: 'pointer' }}>
                                 <div >
                                     <img src={book.coverImage} alt='img' style={{ width: '40px', height: '50px', margin: '3px' }} />
                                 </div>
@@ -367,41 +362,148 @@ const ExploreBooks = () => {
                                     <p>{book.title}</p>
                                     <p>  Author: {book.author}.{book.noOfPages}pgs</p>
                                 </div>
-                                
+                
                             </Container>)}
                     </Container>
                 </div>
-                {(!book) ? null : (
-                    <div style={{ width: '50%', justifyContent: 'left' }}>
-                        <div>
-                            <h3>Book details</h3>
-                            <h4>{book.title}</h4>
-                            <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
-                                <div>
-                                    <img src={book.coverImage} style={{ width: '200px', height: '300px', margin: '3px' }} alt='bookCover' />
-                                </div>
-                                <div style={{ textAlign: 'left', wordWrap: 'break-word', hyphens: 'auto' }}>
-                                    <p>Author: {book.author}</p>
-                                    <p>Subject: {book.subject}</p>
-                                    <p>Edition: {book.edition}</p>
-                                    <p>Size: {book.noOfPages} pages</p>
-                                </div>
-                                <p>Preview: {book.preview}</p>
-                                <p>Tags: {book.tags.map((tag) => ` #${tag}`)}</p>
-                                <div>
-                                    <button onClick={(e) => {
-                                        e.preventDefault();
-                                    }}>Edit</button>
-                                    <button>Delete</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {draw === 'details' && <ShowDetails setMessage={setMessage} message={message} setBook={setBook} book={book } setDraw={setDraw} />}
+                {draw === 'edit' && <BookEditor setBook={setBook} book={book} setDraw={setDraw}/>}
             </div>
         </div>
     );
 };
+
+const ShowDetails = ({ setBook, book, setDraw, message, setMessage }) => {
+    const dispatch = useDispatch();
+    const handleDelete = () => {
+        dispatch(deleteBook(book.id));
+        dispatch(getBooks())
+    }
+
+    return (
+        <div style={{ width: '50%', justifyContent: 'left' }}>
+            <div>
+                <h3>Book details</h3>
+                <h4>{book.title}</h4>
+                <div>
+                    {message === 'delete' ?
+                        <Card style={{ color:'red', height: 'fit-content', width: '95%', padding: '10px', borderRadius: '10px' }}>
+                            <div>Are you sure you would like to delete this book? This action is not reversible</div>
+                            <Button variant='outlined' color='secondary' type='' style={{ marginRight: '30px' }} onClick={e => {
+                                e.preventDefault();
+                                handleDelete();
+                                setMessage(null);
+                                setDraw(null);
+                            }} >Delete</Button>
+                            <Button variant='outlined' color='primary' onClick={e => {
+                                e.preventDefault();
+                                setMessage(null);
+                            }} >Cancel</Button>
+                        </Card> :
+                        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly' }}>
+                            <div></div>
+                            <div>
+                                <Button variant='outlined' color='primary' onClick={(e) => {
+                                    e.preventDefault();
+                                    setDraw('edit');
+                                }}>Edit</Button>
+                                <Button variant='outlined' color='secondary' onClick={(e) => {
+                                    e.preventDefault();
+                                    setMessage('delete');
+                                    // handle delete is not called here, as button is hidden onclick
+                                }}>Delete</Button>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly' }}>
+                    <div>
+                        <img src={book.coverImage} style={{ width: '200px', height: '300px', margin: '3px' }} alt='bookCover' />
+                    </div>
+                    <div style={{ textAlign: 'left', wordWrap: 'break-word', hyphens: 'auto' }}>
+                        <p>Author: {book.author}</p>
+                        <p>Subject: {book.subject}</p>
+                        <p>Edition: {book.edition}</p>
+                        <p>Size: {book.noOfPages} pages</p>
+                    </div>
+                </div>
+                <p>Preview: {book.preview}</p>
+                <p>Tags: {book.tags?.map((tag) => ` #${tag}`)}</p>
+            </div>
+        </div>
+    );
+};
+
+const BookEditor = ({setBook, setDraw, book }) => {
+
+    const dispatch = useDispatch();
+
+    const [bookDetails, setbookDetails] = useState(book)
+    //create tags seperated by commas, for mapping with hashtags
+    const createList = (value) => {
+        const allTags = value.split(',');
+        return allTags
+    };
+
+    const onSubmit = () => {
+        dispatch(editBookDetails(bookDetails))
+    };
+
+    return (
+        <Paper style={{ padding: '1px 1px 1px 1px' }}>
+            <form style={{ width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column' }} >
+                <Typography variant='h6' style={{ fontFamily: 'Courier' }}>
+                    <h3>Editing {book.title}</h3>
+                </Typography>
+                <Container style={{ width: '100%',  display: 'flex', flexDirection: 'row' }}>
+                    <Container style={{ width: '100%',  display: 'flex', flexDirection: 'column' }}>
+                    
+                        <TextField required label='Title' fullWidth size='small' name='title' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.title} onChange={(e) => setbookDetails({ ...bookDetails, title: e.target.value })} />
+                        <TextField label='Author' fullWidth size='small' name='author' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.author} onChange={(e) => setbookDetails({ ...bookDetails, author: e.target.value })} />
+                        <TextField label='Editors' fullWidth size='small' name='editors' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.editors} onChange={(e) => {
+                            const editors = createList(e.target.value.trim())
+                            setbookDetails({ ...bookDetails, editors: editors })
+                        }} />
+                        <TextField label='Edition' fullWidth size='small' name='edition' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.edition} onChange={(e) => setbookDetails({ ...bookDetails, edition: e.target.value })} />
+                        <TextField type='date' label='Year Published' fullWidth size='small' name='yearOfPublication' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.yearOfPublication} onChange={(e) => setbookDetails({ ...bookDetails, yearOfPublication: e.target.value })} />
+                        <TextField label='Publisher' fullWidth size='small' name='publisher' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.publisher} onChange={(e) => setbookDetails({ ...bookDetails, publisher: e.target.value })} />
+                        <TextField label='City' fullWidth size='small' name='cityPublished' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.cityPublished} onChange={(e) => setbookDetails({ ...bookDetails, cityPublished: e.target.value })} />
+                    </Container>
+                    <Container style={{ width: '100%',  display: 'flex', flexDirection: 'column' }}>
+                    
+                        <TextField label='Volume' fullWidth size='small' name='volume' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.volume} onChange={(e) => setbookDetails({ ...bookDetails, volume: e.target.value })} />
+                        <TextField label='Pages' fullWidth size='small' name='noOfPages' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.noOfPages} onChange={(e) => setbookDetails({ ...bookDetails, noOfPages: e.target.value })} />
+                        <TextField label='Discipline' fullWidth size='small' name='discipline' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.discipline} onChange={(e) => setbookDetails({ ...bookDetails, discipline: e.target.value })} />
+                        <TextField label='Category' fullWidth size='small' name='category' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.category} onChange={(e) => setbookDetails({ ...bookDetails, category: e.target.value })} />
+                        <TextField label='Subject' fullWidth size='small' name='subject' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.subject} onChange={(e) => setbookDetails({ ...bookDetails, subject: e.target.value })} />
+                        <TextField label='Tags(separate with comma)' fullWidth size='small' name='tags' variant='outlined' style={{ marginBottom: 5 }} value={bookDetails.tags} onChange={(e) => {
+                            const realTags = createList(e.target.value.trim());
+                            setbookDetails({ ...bookDetails, tags: realTags })
+                        }} />
+                    </Container>
+                </Container>
+                <div style={{ marginBottom: 10, textAlign: 'center' }}>
+                    <p>Choose Cover Image</p>
+                    <FileBase type='file' multiple={false} onDone={({ base64 }) => setbookDetails({ ...bookDetails, coverImage: base64 })} />
+                </div>
+                <TextField label='Preview' fullWidth size='small' name='preview' type='text' multiline='true' style={{ marginBottom: 5 }} value={bookDetails.preview} onChange={(e) => setbookDetails({ ...bookDetails, preview: e.target.value })} />
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly', paddingBottom: '10px' }}>
+                    <Button color='primary' variant='contained' onClick={e => {
+                        e.preventDefault();
+                        onSubmit();
+                        setBook(bookDetails)
+                        setDraw('details');
+                    }} >Save</Button>
+                    <Button color='primary' variant='outlined' onClick={e => {
+                        e.preventDefault();
+                        setDraw('details')
+                    }}>Cancel</Button>
+                </div>
+            </form>
+        </Paper>
+    );
+};
+
 
 const ShowUsers = ({users}) => {
     return (
@@ -414,6 +516,5 @@ const ShowUsers = ({users}) => {
                 </div>
             )}
         </div>
-        
     )
 }

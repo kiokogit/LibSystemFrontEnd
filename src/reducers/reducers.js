@@ -1,16 +1,20 @@
 import { combineReducers } from 'redux';
 import books from './books';
 import users from './users';
-import list from './randomLists';
+import pending from './pending';
 import status from './checks';
-import list2 from './list2';
-import book from './book';
+import borrowed from './borrowed';
+import incart from './incart';
+import comments from './comments';
+import user from './user';
 
 export default combineReducers({
-    books: books,
-    users: users,
-    list: list,
-    status:status,
-    list2: list2,
-    book:book
+    books,
+    users,
+    user,
+    pending,
+    status,
+    borrowed,
+    comments,
+    incart
 });

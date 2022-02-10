@@ -30,13 +30,17 @@ export const getBookDetails = (id) => async (dispatch) => {
 export const signUpUser = (user, navigate) => async (dispatch) => {
     
     try {
-        const { data } = await api.signUp(user);
-        alert(data.message)
-        const credentials={email:user.userEmail, password:user.userPassword};
-        await dispatch({ type: 'REGISTRATION_STATUS', payload: data });
-        await dispatch(loginUser(credentials, navigate));
-
+        const signdata = await api.signUp(user);
+        
+        alert('User Registered Successfully')
+            //for signin
+        const credentials = {email:user.userEmail, password:user.userPassword};
+        await dispatch({ type: 'REGISTRATION_STATUS', payload: signdata.data });
+        await dispatch(loginUser(credentials, navigate)); 
+       
     } catch (e) {
-       console.log(e)
+        if (e.response.status === 401) alert('User With That Email Exists');
+        if (e.response.status === 500) alert('Server Error');
+        else alert('User cannot be registered')
     }
 };

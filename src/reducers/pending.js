@@ -1,6 +1,6 @@
-const randomLists = (list = [], action) => {
+const books = (list = [], action) => {
     switch (action.type) {
-        case 'GET_LIST':
+        case 'GET_REQUESTS':
             return action.payload;
         case 'FETCH_BOOK':
             return action.payload;
@@ -9,4 +9,4 @@ const randomLists = (list = [], action) => {
     }
 };
 
-export default randomLists;
+export default books;

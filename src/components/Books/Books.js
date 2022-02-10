@@ -7,7 +7,7 @@ export const Books = ({books, cartButton, borrowButton}) => {
         <div >
             <div style={{ display: 'flex', flexDirection: 'row', height:250}}>
                 {books.map((book) => (
-                    <div key={book._id} >
+                    <div key={book.id} >
                         <Book books={book} cartButton={cartButton} borrowButton={borrowButton}/>
                         </div>))}
             </div>

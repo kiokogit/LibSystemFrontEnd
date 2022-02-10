@@ -1,39 +1,22 @@
 import * as api from '../../api/api';
 
-//SignUp Admin
-export const registerAdmin = (admin, navigate) => async (dispatch) => {
-    try {
-        const { data } = await api.signUpAdmin(admin);
-        if (data.status === 'ok') {
-            alert(data.message);
-            //proceed to login
-            navigate('/adminLogin');
-
-        } else {
-            alert(data.message)
-        }
-
-        dispatch({type:'REGISTRATION_STATUS', payload:data})
-
-    } catch (e) {
-        
-    }
-}
-
 //login Admin
 export const adminLogin = (admin, navigate) => async (dispatch) => {
     try {
-        const { data } = await api.loginAdmin(admin);
-        if (data.status === 'ok') {
-            localStorage.setItem('USER', JSON.stringify({ data: data.message }));
-            //redirect
+        const { data} = await api.loginAdmin(admin);
+        
+            localStorage.setItem('USER', data.token);
+                //redirect
             navigate('/adminPage');
-        } else {
-            alert(data.message)
-        }
-        dispatch({ type: 'LOGIN_STATUS', payload: data });
+            dispatch({ type: 'LOGIN_STATUS', payload: data });
+        
     } catch (e) {
-        console.log(e)
+        //unauthorized
+        console.log(e);
+        if (e.response.status === 401) alert('Invalid Email/Password');        
+        //server error(
+        if(e.response.status===403) alert('Forbidden')
+        if (e.response.status === 500) alert('Server Error'); 
     }
 };
 
@@ -49,14 +32,11 @@ export const getUsers = () => async (dispatch) => {
 };
 
 //fetch One User
-export const getUserDetails = (navigate) => async (dispatch) => {
+export const getUserDetails = () => async (dispatch) => {
     try {
         const { data } = await api.getOneUser();
-        if (data.status === 'error') {          //if cant get user data, such as in expired token
-            navigate('/loginpage');
-        } else {
-            dispatch({ type: 'FETCH', payload: data });
-        }
+        
+        dispatch({ type: 'GET_USER', payload: data });
     } catch (e) {
         console.log(e);
     }
@@ -77,7 +57,7 @@ export const addABook = (book) => async (dispatch) => {
 export const pendingRequests = () => async (dispatch) => {
     try {
         const { data } = await api.getPendingRequests();
-        dispatch({ type: 'GET_LIST', payload: data });
+        dispatch({ type: 'GET_REQUESTS', payload: data });
 
     } catch (e) {
         console.log(e);
@@ -87,7 +67,7 @@ export const pendingRequests = () => async (dispatch) => {
 export const unReturnedBooks = () => async (dispatch) => {
     try {
         const { data } = await api.getUnReturnedBooks();
-        dispatch({ type: 'GET_LIST_2', payload: data });
+        dispatch({ type: 'GET_BORROWED', payload: data });
 
     } catch (e) {
         console.log(e);
@@ -97,7 +77,7 @@ export const unReturnedBooks = () => async (dispatch) => {
 //checkOut a book to a borrower
 export const checkOutABook = (id) => async (dispatch) => {
     try {
-        console.log('Sending...')
+        
         const { data } = await api.checkOutBook(id);
         console.log('api data: '+ data)
         dispatch({ type: 'ADD_NEW_BOOK', payload: data })
@@ -109,9 +89,9 @@ export const checkOutABook = (id) => async (dispatch) => {
 //manual checkout
 export const checkOutManually = (details) => async (dispatch) => {
     try {
-        console.log('Sending...')
+        
         const { data } = await api.manualCheckOut(details);
-        console.log('api data: '+ data)
+        
         dispatch({ type: 'ADD_NEW_BOOK', payload: data })
 
     } catch (e) {
@@ -137,4 +117,22 @@ export const editBookDetails = (toEdit) => async(dispatch)=>{
     } catch (e) {
         console.log(e)
     }
-}
+};
+
+//Delete a book
+export const deleteBook = (id) => async () => {
+    try {
+        await api.deleteBook(id);
+    } catch (e) {
+        console.log(e)
+    }
+};
+
+//Delete a user - make a user account inactive
+export const deleteUser = (id) => async () => {
+    try {
+        await api.deleteUser(id);
+    } catch (e) {
+        console.log(e)
+    }
+};

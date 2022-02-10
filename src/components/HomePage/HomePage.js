@@ -13,11 +13,14 @@ export const HomePage = () => {
         <div>
             <Header />
             <div>
-            <Container style={{ display: 'flex', flexDirection:'row', justifyContent:'space-evenly', margin:'60px 0px 0px 0px', height:'350px'}}>
-                <Button variant='outlined' style={{marginTop:'275px', height:'50px'}} component={Link} to='/loginPage'>Login/Register</Button>
-                <Button variant='outlined' style={{marginTop:'275px', height:'50px'}} component={Link} to='/browselibrary'>Explore As a Guest</Button>
+                <Container style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly', margin: '60px 0px 0px 0px', height: '350px' }}>
+                    <Button variant='outlined' style={{ marginTop: '275px', height: '50px' }} component={Link} to='/loginPage'>Login/Register</Button>
+                    <Button variant='outlined' style={{ marginTop: '275px', height: '50px' }} component={Link} to='/browselibrary'>Explore As a Guest</Button>
                 </Container>
-                <Container style={{ height:'500px'}}>
+                <Container style={{ height: '500px' }}>
+                    <Card>
+                        Library
+                    </Card>
                 </Container>
             </div>
             <Footer />
@@ -46,7 +49,7 @@ export const ExploreLibrary = () => {
                 <div style={{ width: '50%', backgroundColor: 'initial' }}>
                     <Container align='left'>
                         {books.map((book) =>
-                            <Card key={book._id} style={{ display: 'flex', flexDirection: 'row', fontSize: '0.75rem', borderBottom: 'solid 1px', padding: '5px', textAlign: 'left', width: '90%' }}>
+                            <Card key={book.id} style={{ display: 'flex', flexDirection: 'row', fontSize: '0.75rem', borderBottom: 'solid 1px', padding: '5px', textAlign: 'left', width: '90%' }}>
                                 <div >
                                     <img src={book.coverImage} alt='img' style={{ width: '40px', height: '50px', margin: '3px' }} />
                                 </div>
