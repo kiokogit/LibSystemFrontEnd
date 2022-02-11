@@ -58,7 +58,7 @@ export const EditForm = ({bookDetails, setbookDetails}) => {
                             setbookDetails({ ...bookDetails, editors: editors })
                         }} />
                         <TextField label='Edition' fullWidth size='small' name='edition' variant='outlined' style={{ margin: 10 }} value={bookDetails.edition} onChange={(e) => setbookDetails({ ...bookDetails, edition: e.target.value })} />
-                        <TextField type='date' label='Year Published' fullWidth size='small' name='yearOfPublication' variant='outlined' style={{ margin: 10 }} value={bookDetails.yearOfPublication} onChange={(e) => setbookDetails({ ...bookDetails, yearOfPublication: e.target.value })} />
+                        <TextField type='number' label='Year Published' fullWidth size='small' name='yearOfPublication' variant='outlined' style={{ margin: 10 }} value={bookDetails.yearOfPublication} onChange={(e) => setbookDetails({ ...bookDetails, yearOfPublication: e.target.value })} />
                         <TextField label='Publisher' fullWidth size='small' name='publisher' variant='outlined' style={{ margin: 10 }} value={bookDetails.publisher} onChange={(e) => setbookDetails({ ...bookDetails, publisher: e.target.value })} />
                         <TextField label='City' fullWidth size='small' name='cityPublished' variant='outlined' style={{ margin: 10 }} value={bookDetails.cityPublished} onChange={(e) => setbookDetails({ ...bookDetails, cityPublished: e.target.value })} />
                     </Container>
