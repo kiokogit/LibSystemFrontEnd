@@ -20,7 +20,7 @@
     "history": "^5.1.0",
     "material-ui-search-bar": "^1.0.0",
     "mdb-react-ui-kit": "^2.1.0",
-    "moment": "^2.29.1",
+    "moment": "^2.29.4",
     "prop-type": "0.0.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
